@@ -30,6 +30,7 @@ c
      5            pas,
      7            t1
 c     real        a(6)
+      real        delay ! JV
       complex*16,allocatable :: ux(:,:,:),uy(:,:,:),uz(:,:,:)
       complex*16  omega, ! ux(ntp,nrp,6),uy(ntp,nrp,6),uz(ntp,nrp,6),
      1            uxf(6),uyf(6),uzf(6),ai,deriv,fsource,us
@@ -76,6 +77,7 @@ cc    open(350,form='formatted',file='elemsef.dat') ! elem seis formated
                                                    ! (all in a SINGLE file)
                                                    ! SUCCESSION OF STATS
                                                    ! AS IN GREEN
+      CALL getarg(3,dum);read(dum,*)delay ! JV
 
 
 
@@ -145,7 +147,7 @@ ccccccccccccccccccccccccccc
       freq=float(jf-1)/tl
       omega=cmplx(pi2*freq,aw)
       deriv=(ai*omega)**icc
-      us=fsource(ics,omega,t0,t1,pas) * deriv
+      us=fsource(ics,omega,t0,t1,pas) * deriv * exp(-ai*omega*delay)
 
 ccccccccc modification for 0 freq
 
