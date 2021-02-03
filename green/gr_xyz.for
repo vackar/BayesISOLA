@@ -38,11 +38,18 @@ c     character*20 sourcefile,statfile
       namelist    /input/ nc,nfreq,tl,aw,nr,ns,xl,
      &                    ikmax,uconv,fref
       data        ai,pi,pi2/(0.,1.),3.14159265359,6.28318530718/
-      CHARACTER*255 infile
+      CHARACTER*255 infile, model
 
-      open (in1,form='formatted',file='grdat.hed')
-      open (110,form='formatted',file='crustal.dat')
-	CALL getarg(4,infile)
+      model = ''
+      if (command_argument_count() >= 5) then
+          CALL getarg(5, model)
+          if (trim(model) /= '') then
+              model = '-'//model
+          endif
+      endif
+      open (in1,form='formatted',file='grdat'//trim(model)//'.hed')
+      open (110,form='formatted',file='crustal'//trim(model)//'.dat')
+      CALL getarg(4,infile)
       open (out,form='formatted',file='gr'//trim(infile)//'.hea')
       open (out2,form='unformatted',file='gr'//trim(infile)//'.hes')
       rewind(out)
@@ -73,7 +80,7 @@ c++++++++++
          rho(ic)=rho(ic)*1000.
       enddo
 !       open (in2,form='formatted',file='source.dat')
-      open (in3,form='formatted',file='station.dat')
+      open (in3,form='formatted',file='station'//trim(model)//'.dat')
       
       write(out,input)
       write(out,*) 'hc,vp,vs,rho,Qp,Qs'
@@ -428,7 +435,7 @@ c Local
       integer   ir,ir1,ir2,ic,jr,jrr,js,jss,is,is1,is2,index(nsp)
       logical   tc
       real      hh,tmp,r(nrp,nsp)
-	CHARACTER*255 dum
+      CHARACTER*255 dum1 , dum2 , dum3
 
 c++++++++++++
 c        Lecture coordonnees stations et recepteurs
@@ -453,21 +460,24 @@ c      enddo
 
       do is=1,ns
 c	read(in2,*) index(is),xs(is),ys(is),zs(is)
-        if(is.gt.1) then
-         write(*,*) 'more than one source not allowed in this version'
-         stop
-        endif
+      if(is.gt.1) then
+      write(*,*) 'more than one source not allowed in this version'
+      stop
+      endif
 ccccccc
 !         read(in2,*)
 !         read(in2,*)
-!  	read(in2,*) xs(is),ys(is),zs(is)
-  	CALL getarg(1,dum);read(dum,*)xs(is)
-	CALL getarg(2,dum);read(dum,*)ys(is)
-	CALL getarg(3,dum);read(dum,*)zs(is)
-       xs(is)=xs(is)*1000.
-         ys(is)=ys(is)*1000.
-         zs(is)=zs(is)*1000.
-        index(1)=1
+!         read(in2,*) xs(is),ys(is),zs(is)
+      CALL getarg(1,dum1)
+      CALL getarg(2,dum2)
+      CALL getarg(3,dum3)
+      read(dum1,*)xs(is)
+      read(dum2,*)ys(is)
+      read(dum3,*)zs(is)
+      xs(is)=xs(is)*1000.
+      ys(is)=ys(is)*1000.
+      zs(is)=zs(is)*1000.
+      index(1)=1
 ccccccc
 c xs(is)=xs(is)-xs(is)
 c ys(is)=ys(is)-ys(is)
@@ -476,10 +486,10 @@ c zs(is)=zs(is)-zs(is)
       read(in3,*)
       read(in3,*)
       do ir=1,nr
-	read(in3,*) xr(ir),yr(ir),zr(ir)
-         xr(ir)=xr(ir)*1000.
-         yr(ir)=yr(ir)*1000.
-         zr(ir)=zr(ir)*1000.
+      read(in3,*) xr(ir),yr(ir),zr(ir)
+      xr(ir)=xr(ir)*1000.
+      yr(ir)=yr(ir)*1000.
+      zr(ir)=zr(ir)*1000.
 c xr(ir)=xr(ir)-xs(1)
 c yr(ir)=yr(ir)-ys(1)
 c zr(ir)=zr(ir)-zs(1)
@@ -490,31 +500,31 @@ c        conversion interface -> epaisseur des couches
 c++++++++++++
 
       if (hc(1).eq.0.) then
-	do ic=1,nc-1
-	 hc(ic)=hc(ic+1)-hc(ic)
-	enddo
+      do ic=1,nc-1
+      hc(ic)=hc(ic+1)-hc(ic)
+      enddo
       endif
 
 c++++++++++++
 c        on reordonne les sources par profondeur croissante
 c++++++++++++
       do is1=1,ns-1
-       do is2=is1,ns
-	if (zs(is1).gt.zs(is2)) then
-	 tmp=xs(is1)
-	 xs(is1)=xs(is2)
-	 xs(is2)=tmp
-	 tmp=ys(is1)
-	 ys(is1)=ys(is2)
-	 ys(is2)=tmp
-	 tmp=zs(is1)
-	 zs(is1)=zs(is2)
-	 zs(is2)=tmp
-	 tmp=index(is1)
-	 index(is1)=index(is2)
-	 index(is2)=tmp
-	endif
-       enddo
+      do is2=is1,ns
+      if (zs(is1).gt.zs(is2)) then
+      tmp=xs(is1)
+      xs(is1)=xs(is2)
+      xs(is2)=tmp
+      tmp=ys(is1)
+      ys(is1)=ys(is2)
+      ys(is2)=tmp
+      tmp=zs(is1)
+      zs(is1)=zs(is2)
+      zs(is2)=tmp
+      tmp=index(is1)
+      index(is1)=index(is2)
+      index(is2)=tmp
+      endif
+      enddo
       enddo
       rewind (in2)
       do is=1,ns
@@ -534,36 +544,36 @@ c++++++++++++
  
       do is=1,ns
 c                       compute ic,zc
-       ic=1    
-       hh=hc(1)
-       do while ((zs(is).gt.hh).and.(ic.lt.nc))
-	zs(is)=zs(is)-hh
-	ic=ic+1
-	hh=hc(ic)
-       enddo
+      ic=1    
+      hh=hc(1)
+      do while ((zs(is).gt.hh).and.(ic.lt.nc))
+      zs(is)=zs(is)-hh
+      ic=ic+1
+      hh=hc(ic)
+      enddo
        cff(is)=1./rho(ic)
 c                       compute isc(),ncs,js
-       if (is.eq.1) then
-	isc(1)=ic
-	ncs=1
-	js=1
-       else
-	is1=1
-	tc=.true.
-	do while (is1.le.ncs)
-	 if (ic.eq.isc(is1)) then
-	  js=is1
-	  tc=.false.
-	 endif
-	 is1=is1+1
-	enddo
-	if (tc) then
-	 ncs=ncs+1
-	 isc(ncs)=ic
-	 js=ncs
-	 nzs(js)=0
-	endif
-       endif
+      if (is.eq.1) then
+      isc(1)=ic
+      ncs=1
+      js=1
+      else
+      is1=1
+      tc=.true.
+      do while (is1.le.ncs)
+      if (ic.eq.isc(is1)) then
+      js=is1
+      tc=.false.
+      endif
+      is1=is1+1
+      enddo
+      if (tc) then
+      ncs=ncs+1
+      isc(ncs)=ic
+      js=ncs
+      nzs(js)=0
+      endif
+      endif
 c                       compute nzs(),jss
        if (is.eq.1) then
 	nzs(1)=1
