@@ -1,0 +1,12 @@
+&input
+nc=10
+nfreq=410
+tl=81.92
+aw=0.1
+nr=10
+ns=1
+xl=30000000.
+ikmax=1000000
+uconv=0.1E-06
+fref=1.
+/end
