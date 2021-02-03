@@ -73,7 +73,7 @@ c++++++++++
       read(110,*)
       read(110,*)
       do ic=1,nc
-	read(110,*) hc(ic),vp(ic),vs(ic),rho(ic),qp(ic),qs(ic)
+      read(110,*) hc(ic),vp(ic),vs(ic),rho(ic),qp(ic),qs(ic)
          hc(ic)=hc(ic)*1000.
          vp(ic)=vp(ic)*1000.
          vs(ic)=vs(ic)*1000.
@@ -85,7 +85,8 @@ c++++++++++
       write(out,input)
       write(out,*) 'hc,vp,vs,rho,Qp,Qs'
       do 3 ic=1,nc
- 3    write(out,1001) hc(ic),vp(ic),vs(ic),rho(ic),qp(ic),qs(ic)
+         write(out,1001) hc(ic),vp(ic),vs(ic),rho(ic),qp(ic),qs(ic)
+ 3    continue
 
 c               Test sur les dimensions
 
@@ -283,9 +284,12 @@ C  STANDARD FORTRAN 66(A VERIFIED PFORT SUBROUTINE)
       DO 40  I=N1,N2
       Q1=Q2
       Q2=Q3
-   40 Q3=X2*Q2-Q1+A(I)
+      Q3=X2*Q2-Q1+A(I)
+   40 continue
       FX=(Q3-Q1)*.5D0
-      IF(N1-19)50,51,52
+c       IF(N1-19)50,51,52
+      IF (N1-19 .eq. 0) go to 51
+      IF (N1-19 .gt. 0) go to 52
    50 VJ0=FX
       IF(N .LE. 0)GO TO 75
       N1=19
@@ -385,7 +389,9 @@ C  STANDARD FORTRAN 66(A VERIFIED PFORT SUBROUTINE)
       Q3=X2*Q2-Q1+A(I)
    40 CONTINUE
       FX=(Q3-Q1)*.5D0
-      IF(N1-19)50,51,52
+c       IF(N1-19)50,51,52
+      IF (N1-19 .eq. 0) go to 51
+      IF (N1-19 .gt. 0) go to 52
    50 VJ1=FX*Z
       IF(N.LE.0)GO TO 75
       N1=19
