@@ -18,7 +18,7 @@ from pyproj import Geod # transformation of geodetic coordinates
 import scipy.interpolate
 from scipy.io import FortranFile # fortran unformated (binary) files
 import os.path
-import psycopg2 as pg
+#import psycopg2 as pg
 from scipy import signal
 
 import matplotlib as mpl
