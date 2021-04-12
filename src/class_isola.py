@@ -12,13 +12,13 @@ import multiprocessing as mp
 import re # RegExp
 import fractions
 import warnings
+warnings.filterwarnings("ignore",category=DeprecationWarning)
 warnings.filterwarnings('ignore', '.*Conversion of the second argument of issubdtype from.*') # Avoids following warning:
 		# /usr/lib/python3.7/site-packages/obspy/signal/detrend.py:31: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
 from pyproj import Geod # transformation of geodetic coordinates
 import scipy.interpolate
 from scipy.io import FortranFile # fortran unformated (binary) files
 import os.path
-#import psycopg2 as pg
 from scipy import signal
 
 import matplotlib as mpl
@@ -35,26 +35,16 @@ import obspy
 from obspy.core import read, AttribDict
 from obspy import Trace, Stream, UTCDateTime, read_inventory
 import obspy.imaging.scripts.mopad as mopad
-#if obspy.__version__[0] == '0':
-	#from obspy.clients.arclink import Client
-	#from obspy.imaging.beachball import Beach as beach, Beachball as beachball
-	#from obspy.imaging.mopad_wrapper import Beach as beach2   # Buggy ?!
-#else: # 1.0 and newer
-	#from obspy.clients.arclink import Client
-	#from obspy.geodetics.base import gps2dist_azimuth
-	#from obspy.imaging.beachball import beach, beachball
-	#from obspy.imaging.mopad_wrapper import beach as beach2   # Buggy ?!
 from obspy.clients.arclink import Client
 from obspy.geodetics.base import gps2dist_azimuth
 from obspy.imaging.beachball import beach, beachball
-from obspy.imaging.mopad_wrapper import beach as beach2   # Buggy ?!
+#from obspy.imaging.mopad_wrapper import beach as beach2   # nofill parameter results in a black circle
 #from obspy.signal.cross_correlation import xcorr   # There was some problem with small numbers
 
 #from nearest_correlation import nearcorr # nearest correlation matrix
 from MouseTrap import *
 
 
-warnings.filterwarnings("ignore",category=DeprecationWarning)
 
 
 def rename_keys(somedict, prefix='', suffix=''):
@@ -778,7 +768,9 @@ class ISOLA:
     :type s_velocity: float, optional
     :param s_velocity: characteristic S-wave velocity used for calculating number of wave lengths between the source and stations (default 3000 m/s)
     :type logfile: string, optional
-    :param logfile: path to the logfile
+    :param logfile: path to the logfile (default '$outdir/log.txt')
+    :type outdir: string, optional
+    :param outdir: a directory, where the outputs are saved (default 'output')
 	
     .. rubric:: _`Variables`
     
@@ -877,7 +869,7 @@ class ISOLA:
     ``rupture_length`` : float
         Estimated length of the rupture in meters
 	"""
-	def __init__(self, location_unc=0, depth_unc=0, time_unc=0, deviatoric=False, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, threads=2, invert_displacement=False, circle_shape=True, use_precalculated_Green=False, rupture_velocity=1000, s_velocity=3000, decompose=True, logfile='output/log.txt'):
+	def __init__(self, location_unc=0, depth_unc=0, time_unc=0, deviatoric=False, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, threads=2, invert_displacement=False, circle_shape=True, use_precalculated_Green=False, rupture_velocity=1000, s_velocity=3000, decompose=True, outdir='output', logfile='$outdir/log.txt'):
 		self.location_unc = location_unc # m
 		self.depth_unc = depth_unc # m
 		self.time_unc = time_unc # s
@@ -897,7 +889,8 @@ class ISOLA:
 		self.rupture_velocity = rupture_velocity
 		self.s_velocity = s_velocity
 		self.decompose = decompose
-		self.logfile = open(logfile, 'w', 1)
+		self.outdir = outdir
+		self.logfile = open(logfile.replace('$outdir', self.outdir), 'w', 1)
 		self.data = []
 		self.data_raw = []
 		#self.data_unfiltered = []
@@ -2628,12 +2621,13 @@ class ISOLA:
 		"""
 		Runs :func:`Green_wrapper` (Green's function calculation) in parallel.
 		"""
-		open('output/log_green.txt', "w").close() # erase file contents
+		logfile = self.outdir+'/log_green.txt'
+		open(logfile, "w").close() # erase file contents
 		# run `gr_xyz` aand `elemse`
 		for model in self.models:
 			if self.threads > 1: # parallel
 				pool = mp.Pool(processes=self.threads)
-				results = [pool.apply_async(Green_wrapper, args=(i, model, self.grid[i]['x'], self.grid[i]['y'], self.grid[i]['z'], self.npts_exp, self.elemse_start_origin)) for i in range(len(self.grid))]
+				results = [pool.apply_async(Green_wrapper, args=(i, model, self.grid[i]['x'], self.grid[i]['y'], self.grid[i]['z'], self.npts_exp, self.elemse_start_origin, logfile)) for i in range(len(self.grid))]
 				output = [p.get() for p in results]
 				for i in range (len(self.grid)):
 					if output[i] == False:
@@ -2642,7 +2636,7 @@ class ISOLA:
 			else: # serial
 				for i in range (len(self.grid)):
 					gp = self.grid[i]
-					Green_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin)
+					Green_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin, logfile)
 
 	def run_inversion(self):
 		"""
@@ -2840,7 +2834,7 @@ class ISOLA:
   Fault plane 1: strike = {{s1:{0:s}f}}, dip = {{d1:{0:s}f}}, slip-rake = {{r1:{0:s}f}}
   Fault plane 2: strike = {{s2:{0:s}f}}, dip = {{d2:{0:s}f}}, slip-rake = {{r2:{0:s}f}}'''.format(precision).format(**self.mt_decomp))
 
-	def plot_MT(self, outfile='output/centroid.png', facecolor='red'):
+	def plot_MT(self, outfile='$outdir/centroid.png', facecolor='red'):
 		"""
 		Plot the beachball of the best solution ``self.centroid``.
 		
@@ -2848,6 +2842,7 @@ class ISOLA:
 		:type outfile: string, optional
 		:param facecolor: color of the colored quadrants/parts of the beachball
 		"""
+		outfile = outfile.replace('$outdir', self.outdir)
 		fig = plt.figure(figsize=(5,5))
 		ax = plt.axes()
 		plt.axis('off')
@@ -2860,10 +2855,10 @@ class ISOLA:
 		a = self.centroid['a']
 		mt2 = a2mt(a, system='USE')
 		#beachball(mt2, outfile=outfile)
-		full = beach2(mt2, linewidth=lw, facecolor=facecolor, edgecolor='black', zorder=1)
+		full = beach(mt2, linewidth=lw, facecolor=facecolor, edgecolor='black', zorder=1)
 		ax.add_collection(full)
 		if self.decompose:
-			dc = beach2((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw/2, zorder=2)
+			dc = beach((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw/2, zorder=2)
 			ax.add_collection(dc)
 		if outfile:
 			plt.savefig(outfile, bbox_inches='tight', pad_inches=0)
@@ -2877,7 +2872,7 @@ class ISOLA:
 		#beachball(mt)
 		#beachball2(mt)
 	
-	def plot_uncertainty(self, outfile='output/uncertainty.png', n=200, reference=None, best=True, fontsize=None):
+	def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=None, best=True, fontsize=None):
 		"""
 		Generates random realizations based on the calculated solution and its uncertainty and plots these mechanisms and histograms of its parameters.
 		
@@ -2966,18 +2961,18 @@ class ISOLA:
 		for a in A:
 			mt2 = a2mt(a, system='USE')
 			try:
-				full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+				full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
 				ax.add_collection(full)
 			except:
 				print('plotting this moment tensor failed: ', mt2)
 		if best:
 			mt2 = a2mt(c['a'], system='USE')
-			full = beach2(mt2, linewidth=lw*3, nofill=True, edgecolor=(0.,1.,0.2))
+			full = beach(mt2, linewidth=lw*3, nofill=True, edgecolor=(0.,1.,0.2))
 			ax.add_collection(full)
 		if reference and len(reference)==6:
 			ref = decompose(reference)
 			mt2 = (reference[2], reference[0], reference[1], reference[4], -reference[5], -reference[3])
-			full = beach2(mt2, linewidth=lw*3, nofill=True, edgecolor='red')
+			full = beach(mt2, linewidth=lw*3, nofill=True, edgecolor='red')
 			ax.add_collection(full)
 		elif reference:
 			ref = reference
@@ -2987,6 +2982,7 @@ class ISOLA:
 				ref['mom'] = 10**((ref['Mw']+18.1/3.)*1.5)
 		else:
 			ref = {'dc_perc':None, 'clvd_perc':None, 'iso_perc':None, 'mom':None, 'Mw':None, 's1':0, 's2':0, 'd1':0, 'd2':0, 'r1':0, 'r2':0}
+		outfile = outfile.replace('$outdir', self.outdir)
 		k = outfile.rfind(".")
 		s1 = outfile[:k]+'_'; s2 = outfile[k:]
 		if outfile:
@@ -3006,15 +3002,15 @@ class ISOLA:
 		plt.ylim(-100-lw/2, 100+lw/2)
 		for i in range(0, len(strike), 2):
 			try:
-				dc = beach2((strike[i], dip[i], rake[i]), linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
+				dc = beach((strike[i], dip[i], rake[i]), linewidth=lw, nofill=True, edgecolor='black', alpha=0.1)
 				ax.add_collection(dc)
 			except:
 				print('plotting this moment strike / dip / rake failed: ', (strike[i], dip[i], rake[i]))
 		if best and self.decompose:
-			dc = beach2((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw*3, edgecolor=(0.,1.,0.2))
+			dc = beach((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw*3, edgecolor=(0.,1.,0.2))
 			ax.add_collection(dc)
 		if reference:
-				dc = beach2((ref['s1'], ref['d1'], ref['r1']), linewidth=lw*3, nofill=True, edgecolor='red')
+				dc = beach((ref['s1'], ref['d1'], ref['r1']), linewidth=lw*3, nofill=True, edgecolor='red')
 				ax.add_collection(dc)
 		if outfile:
 			plt.savefig(s1+'MT_DC'+s2, bbox_inches='tight', pad_inches=0)
@@ -3051,7 +3047,7 @@ class ISOLA:
 		self.log('Standard deviation :: dc: {dc:4.2f}, clvd: {clvd:4.2f}, iso: {iso:4.2f}, Mw: {Mw:4.2f}, t: {t:4.2f}, x: {x:4.2f}, y: {y:4.2f}, z: {z:4.2f}'.format(**stdev))
 		return stdev
 
-	def plot_MT_uncertainty_centroid(self, outfile='output/MT_uncertainty_centroid.png', n=100):
+	def plot_MT_uncertainty_centroid(self, outfile='$outdir/MT_uncertainty_centroid.png', n=100):
 		"""
 		Similar as :func:`plot_uncertainty`, but only the best point of the space-time grid is taken into account, so the uncertainties should be Gaussian.
 		"""
@@ -3077,19 +3073,19 @@ class ISOLA:
 			mt2 = a2mt(a, system='USE')
 			#full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')
 			try:
-				full = beach2(mt2, linewidth=lw, nofill=True, edgecolor='black')
+				full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')
 			except:
 				print(a)
 				print(mt2)
 			ax.add_collection(full)
 		if outfile:
-			plt.savefig(outfile, bbox_inches='tight', pad_inches=0)
+			plt.savefig(outfile.replace('$outdir', self.outdir), bbox_inches='tight', pad_inches=0)
 		else:
 			plt.show()
 		plt.clf()
 		plt.close()
 		
-	def plot_maps(self, outfile='output/map.png', beachball_size_c=False):
+	def plot_maps(self, outfile='$outdir/map.png', beachball_size_c=False):
 		"""
 		Plot figures showing how the solution is changing across the grid.
 		
@@ -3100,6 +3096,7 @@ class ISOLA:
 		
 		Plot top view to the grid at each depth. The solutions in each grid point (for the centroid time with the highest VR) are shown by beachballs. The color of the beachball corresponds to its DC-part. The inverted centroid time is shown by a contour in the background and the condition number by contour lines.
 		"""
+		outfile = outfile.replace('$outdir', self.outdir)
 		r = self.radius * 1e-3 * 1.1 # to km, *1.1
 		if beachball_size_c:
 			max_width = np.sqrt(self.max_sum_c)
@@ -3129,7 +3126,7 @@ class ISOLA:
 				filename = None
 			self.plot_map_backend(x, y, s, CN, MT, color, width, highlight, -r, r, -r, r, xlabel='west - east [km]', ylabel='south - north [km]', title='depth {0:5.2f} km'.format(z/1000), beachball_size_c=beachball_size_c, outfile=filename)
 
-	def plot_slices(self, outfile='output/slice.png', point=None, beachball_size_c=False):
+	def plot_slices(self, outfile='$outdir/slice.png', point=None, beachball_size_c=False):
 		"""
 		Plot vertical slices through the grid of solutions in point `point`.
 		If `point` not specified, use the best solution as a point.
@@ -3143,6 +3140,7 @@ class ISOLA:
 		
 		The legend is the same as at :func:`plot_maps`.
 		"""
+		outfile = outfile.replace('$outdir', self.outdir)
 		if point:
 			x0, y0 = point
 		else:
@@ -3183,7 +3181,7 @@ class ISOLA:
 			xlabel = {'N-S':'north - south', 'W-E':'west - east', 'NW-SE':'north-west - south-east', 'SW-NE':'south-west - north-east'}[slice] + ' [km]'
 			self.plot_map_backend(x, y, s, CN, MT, color, width, highlight, -r, r, depth_max + depth*0.05, depth_min - depth*0.05, xlabel, 'depth [km]', title='vertical slice', beachball_size_c=beachball_size_c, outfile=filename)
 
-	def plot_maps_sum(self, outfile='output/map_sum.png'):
+	def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 		"""
 		Plot map and vertical slices through the grid of solutions showing the posterior probability density function (PPD).
 		Contrary to :func:`plot_maps` and :func:`plot_slices`, the size of the beachball correspond not only to the PPD of grid-point through which is a slice placed, but to a sum of all grid-points which are before and behind.
@@ -3193,6 +3191,7 @@ class ISOLA:
 		
 		The legend and properties of the function are similar as at function :func:`plot_maps`.
 		"""
+		outfile = outfile.replace('$outdir', self.outdir)
 		if not self.Cd_inv:
 			return False # if the data covariance matrix is unitary, we have no estimation of data errors, so the PDF has good sense
 		r = self.radius * 1e-3 * 1.1 # to km, *1.1
@@ -3296,7 +3295,7 @@ class ISOLA:
 				except:
 					#print('Plotting this moment tensor in a grid point crashed: ', mt2, 'using mopad')
 					try:
-						b = beach2(MT[i], xy=(x[i], y[i]), width=(width[i], width[i]*np.sign(ydiff)), linewidth=0.5, facecolor=color[i], zorder=10) # width: at side views, mirror along horizontal axis to avoid effect of reversed y-axis
+						b = beach(MT[i], xy=(x[i], y[i]), width=(width[i], width[i]*np.sign(ydiff)), linewidth=0.5, facecolor=color[i], zorder=10) # width: at side views, mirror along horizontal axis to avoid effect of reversed y-axis
 					except:
 						print('Plotting this moment tensor in a grid point crashed: ', MT[i])
 					else:
@@ -3384,7 +3383,7 @@ class ISOLA:
 		plt.clf()
 		plt.close()
 
-	def plot_3D(self, outfile='output/animation.mp4'):
+	def plot_3D(self, outfile='$outdir/animation.mp4'):
 		"""
 		Creates an animation with the grid of solutios. The grid points are labeled according to their variance reduction.
 		
@@ -3427,10 +3426,10 @@ class ISOLA:
 		def animate(i):
 			ax.view_init(elev=10., azim=i)
 		anim = animation.FuncAnimation(fig, animate, init_func=init, frames=360, interval=20, blit=True) # Animate
-		anim.save(outfile, writer=self.movie_writer, fps=30) # Save
-		#anim.save(outfile, writer=self.movie_writer, fps=30, extra_args=['-vcodec', 'libx264']) 
+		anim.save(outfile.replace('$outdir', self.outdir), writer=self.movie_writer, fps=30) # Save
+		#anim.save(outfile.replace('$outdir', self.outdir), writer=self.movie_writer, fps=30, extra_args=['-vcodec', 'libx264']) 
 
-	def plot_seismo(self, outfile='output/seismo.png', comp_order='ZNE', cholesky=False, obs_style='k', obs_width=3, synt_style='r', synt_width=2, add_file=None, add_file_style='k:', add_file_width=2, add_file2=None, add_file2_style='b-', add_file2_width=2, plot_stations=None, plot_components=None, sharey=False):
+	def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=False, obs_style='k', obs_width=3, synt_style='r', synt_width=2, add_file=None, add_file_style='k:', add_file_width=2, add_file2=None, add_file2_style='b-', add_file2_width=2, plot_stations=None, plot_components=None, sharey=False):
 		"""
 		Plots the fit between observed and simulated seismogram.
 		
@@ -3541,9 +3540,9 @@ class ISOLA:
 		ax[-1,0].set_ylim([-d_max, d_max])
 		ea.append(f.legend((l_d, l_s), ('inverted data', 'modeled (synt)'), loc='lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=2, numpoints=1, fontsize='small', fancybox=True, handlelength=3)) # , borderaxespad=0.1
 		ea.append(f.text(0.1, 1.06-0.004*len(plot_stations), 'x', color='white', ha='center', va='center'))
-		self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, extra_artists=ea)
+		self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, extra_artists=ea)
 
-	def plot_covariance_function(self, outfile='output/covariance.png', comp_order='ZNE', crosscovariance=False, style='k', width=2, plot_stations=None, plot_components=None):
+	def plot_covariance_function(self, outfile='$outdir/covariance.png', comp_order='ZNE', crosscovariance=False, style='k', width=2, plot_stations=None, plot_components=None):
 		"""
 		Plots the covariance functions on whose basis is the data covariance matrix generated
 		
@@ -3589,9 +3588,9 @@ class ISOLA:
 				ax[3*r,  0].set_ylabel(' \n Z ')
 				ax[3*r+1,0].set_ylabel(data[sta][0].stats.station + '\n N ')
 				ax[3*r+2,0].set_ylabel(' \n E ')
-		self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, yticks=False, extra_artists=ea)
+		self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, yticks=False, extra_artists=ea)
 
-	def plot_noise(self, outfile='output/noise.png', comp_order='ZNE', obs_style='k', obs_width=2, plot_stations=None, plot_components=None):
+	def plot_noise(self, outfile='$outdir/noise.png', comp_order='ZNE', obs_style='k', obs_width=2, plot_stations=None, plot_components=None):
 		"""
 		Plots the noise records from which the covariance matrix is calculated together with the inverted data
 		
@@ -3637,9 +3636,9 @@ class ISOLA:
 				l5 = ax[r,i].add_patch(mpatches.Rectangle((0, -ymax), self.npts_slice/samprate, 2*ymax, color=(0.7, 0.7, 0.7)))
 		ea.append(f.legend((l4, l5), ('$C_D$', 'inverted'), 'lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=2, fontsize='small', fancybox=True, handlelength=3, handleheight=1.2)) # , borderaxespad=0.1
 		ea.append(f.text(0.1, 1.06-0.004*len(plot_stations), 'x', color='white', ha='center', va='center'))
-		self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, extra_artists=ea)
+		self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, extra_artists=ea)
 		
-	def plot_spectra(self, outfile='output/spectra.png', comp_order='ZNE', plot_stations=None, plot_components=None):
+	def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_stations=None, plot_components=None):
 		"""
 		Plots spectra of inverted data, standardized data, and before-event noise together
 		
@@ -3729,7 +3728,7 @@ class ISOLA:
 				if fmax[r,c]:
 					ax[r,c].add_artist(Line2D((fmin[r,c], fmin[r,c]), (0, ymax), color='g', linewidth=1))
 					ax[r,c].add_artist(Line2D((fmax[r,c], fmax[r,c]), (0, ymax), color='g', linewidth=1))
-		self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, yticks=False, extra_artists=ea)
+		self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, yticks=False, extra_artists=ea)
 
 	def plot_seismo_backend_1(self, plot_stations, plot_components, comp_order, crosscomp=False, sharey=True, yticks=True, title_prefix='', xlabel='time [s]', ylabel='velocity [m/s]'):
 		"""
@@ -3846,7 +3845,7 @@ class ISOLA:
 		np.save(file_d, d)
 		np.save(file_synt, synt)
 
-	def plot_stations(self, outfile='output/stations.png', network=True, location=False, channelcode=False, fontsize=0):
+	def plot_stations(self, outfile='$outdir/stations.png', network=True, location=False, channelcode=False, fontsize=0):
 		"""
 		Plot a map of stations used in the inversion.
 		
@@ -3900,7 +3899,7 @@ class ISOLA:
 			#plt.legend(numpoints=1)
 		plt.legend(bbox_to_anchor=(0., -0.15-fontsize*0.002, 1., .07), loc='lower left', ncol=4, numpoints=1, mode='expand', fontsize='small', fancybox=True)
 		if outfile:
-			plt.savefig(outfile, bbox_inches='tight')
+			plt.savefig(outfile.replace('$outdir', self.outdir), bbox_inches='tight')
 		else:
 			plt.show()
 		plt.clf()
@@ -3995,13 +3994,13 @@ class ISOLA:
 			t.tick2On = False
 		
 		if outfile:
-			plt.savefig(outfile, bbox_inches='tight')
+			plt.savefig(outfile.replace('$outdir', self.outdir), bbox_inches='tight')
 		else:
 			plt.show()
 		plt.clf()
 		plt.close('all')
 	
-	def html_log(self, outfile='output/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT=None, plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None, plot_seismo_sharey=None, mouse_figures=None, plot_spectra=None, plot_noise=None, plot_covariance_function=None, plot_covariance_matrix=None, plot_maps=None, plot_slices=None, plot_maps_sum=None):
+	def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT=None, plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None, plot_seismo_sharey=None, mouse_figures=None, plot_spectra=None, plot_noise=None, plot_covariance_function=None, plot_covariance_matrix=None, plot_maps=None, plot_slices=None, plot_maps_sum=None):
 		"""
 		Generates an HTML page containing informations about the calculation and the result together with figures
 		
@@ -4040,7 +4039,7 @@ class ISOLA:
 		:param plot_maps_sum: path to figures of solutions across the grid plotted by :func:`plot_maps_sum` (the common part of filename)
 		:type plot_maps_sum: string, optional
 		"""
-		out = open(outfile, 'w')
+		out = open(outfile.replace('$outdir', self.outdir), 'w')
 		e = self.event
 		C = self.centroid
 		decomp = self.mt_decomp.copy()
