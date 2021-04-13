@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import numpy as np
 import fractions
 
 def rename_keys(somedict, prefix='', suffix=''):
@@ -65,3 +66,27 @@ def my_filter(data, fmin, fmax):
 		data.filter('highpass', freq=fmin, corners=2)
 		data.filter('highpass', freq=fmin, corners=2)
 
+def decimate(a, n=2):
+	"""
+	Decimates given sequence.
+	
+	:param data: data
+	:type data: 1-D array
+	:param n: decimation factor
+	:type n: integer, optional
+	
+	Before decimating, filter out frequencies over Nyquist frequency using :func:`numpy.fft.fft`
+	"""
+	npts = len(a)
+	#NPTS = npts # next_power_of_2(npts)
+	NPTS = npts
+	A = np.fft.fft(a, NPTS)
+	idx = int(np.round(npts/n/2))
+	A[idx:NPTS-idx+1] = 0+0j
+	#for i in range(flim, NPTS-flim+1):
+		#TR[i] = 0+0j
+	a = np.fft.ifft(A)
+	if npts % (2*n) == 1 or n!=2: # keep odd length for decimation factor 2
+		return a[:npts:n].real
+	else:
+		return a[1:npts:n].real
