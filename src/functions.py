@@ -55,19 +55,13 @@ def lcmm(b, *args):
 		b = fractions.gcd(a, b)
 	return 3/b
 
-def a2mt(a, system='NEZ'):
+def my_filter(data, fmin, fmax):
 	"""
-	Convert the coefficients of elementary seismograms to moment tensor components.
-	
-	:param a: coefficients of elementary seismograms
-	:type a: list of 6 floats
-	:param system: coordinate system: 'NEZ' = coordinate positive to north-east-down in given order, 'USE' = up-south-east
-	:type system: string
-	:return: list of 6 components of the moment tensor
+	Filter used for filtering both elementary and observed seismograms
 	"""
-	mt = [-a[3,0]+a[5,0], -a[4,0]+a[5,0], a[3,0]+a[4,0]+a[5,0], a[0,0], a[1,0], -a[2,0]] # [M11, M22, M33, M12, M13, M23] in NEZ system
-	if system == 'NEZ':
-		return mt
-	elif system == 'USE':
-		return [mt[2], mt[0], mt[1], mt[4], -mt[5], -mt[3]] # convert to USE system
+	if fmax:
+		data.filter('lowpass', freq=fmax)
+	if fmin:
+		data.filter('highpass', freq=fmin, corners=2)
+		data.filter('highpass', freq=fmin, corners=2)
 

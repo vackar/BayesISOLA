@@ -6,7 +6,6 @@ from math import sin,cos,radians,degrees,floor
 import numpy as np
 from numpy import matrix,array
 #from copy import deepcopy
-import subprocess
 import shutil
 import multiprocessing as mp
 #import re # RegExp
@@ -45,117 +44,10 @@ from MouseTrap import *
 from functions import *
 from fileformats import *
 from histogram import histogram
-#from inverse_problem import invert
+from inverse_problem import invert
+from MT_comps import *
+from axitra import Axitra_wrapper
 
-def decompose_mopad(mt):
-	"""
-	Decomposition of the moment tensor using ``obspy-mopad``.
-	
-	:param mt: moment tensor in system 'NEZ'
-	:type mt: list of 6 floats
-	:return: dictionary {'dc_perc': double couple percentage, 'clvd_perc': compensated linear vector dipole percentage, 'iso_perc': isotropic component percentage, 'faultplanes': list of fault planes parameters, 'moment': scalar seismic moment, 'Mw': moment magnitude :math:`M_W`, 's1': strike (fault plane 1), 'd1': dip (fault plane 1), 'r1': slip rake (fault plane 1), 's2': strike (fault plane 2), 'd2': dip (fault plane 2), 'r2': slip rake (fault plane 2)}
-	"""
-	process = subprocess.Popen(['obspy-mopad', 'decompose', '-t 20', '-c', '--', '{0:f},{1:f},{2:f},{3:f},{4:f},{5:f}'.format(*mt)], stdout=subprocess.PIPE)
-	out, err = process.communicate()
-	out = eval(out)
-	f = out[23]
-	return {
-		'iso_perc':out[5], 
-		'dc_perc':out[9], 
-		'clvd_perc':out[15], 
-		'mom':out[16], 
-		'Mw':out[17],
-		'eigvecs':out[18],
-		'eigvals':out[19],
-		'p':out[20],
-		't':out[22],
-		'faultplanes':out[23], 
-		's1':f[0][0], 'd1':f[0][1], 'r1':f[0][2], 's2':f[1][0], 'd2':f[1][1], 'r2':f[1][2]}
-
-def decompose(mt):
-	"""
-	Decomposition of the moment tensor using eigenvalues and eigenvectors according to paper Vavrycuk, JoSE.
-	
-	:param mt: moment tensor in system 'NEZ'
-	:type mt: list of 6 floats
-	:return: dictionary {'dc_perc': double couple percentage, 'clvd_perc': compensated linear vector dipole percentage, 'iso_perc': isotropic component percentage, 'faultplanes': list of fault planes parameters, 'moment': scalar seismic moment, 'Mw': moment magnitude :math:`M_W`, 's1': strike (fault plane 1), 'd1': dip (fault plane 1), 'r1': slip rake (fault plane 1), 's2': strike (fault plane 2), 'd2': dip (fault plane 2), 'r2': slip rake (fault plane 2)}
-	"""
-	M = np.array([
-		[mt[0], mt[3], mt[4]],
-		[mt[3], mt[1], mt[5]],
-		[mt[4], mt[5], mt[2]]])
-	m,v = np.linalg.eig(M)
-	idx = m.argsort()[::-1]   
-	m = m[idx]
-	v = v[:,idx]
-	
-	iso  = 1./3. * m.sum()
-	clvd = 2./3. * (m[0] + m[2] - 2*m[1])
-	dc   = 1./2. * (m[0] - m[2] - np.abs(m[0] + m[2] - 2*m[1]))
-	moment = np.abs(iso) + np.abs(clvd) + dc
-	iso_perc  = 100 * iso/moment
-	clvd_perc = 100 * clvd/moment
-	dc_perc   = 100 * dc/moment
-	Mw = 2./3. * np.log10(moment) - 18.1/3.
-	p = v[:,0]
-	n = v[:,1]
-	t = v[:,2]
-	c1_4 = 0.5 * np.sqrt(2)
-	n1 = (p+t) * c1_4 # normals to fault planes
-	n2 = (p-t) * c1_4
-	
-	if iso_perc < 99.9:
-		s1, d1, r1 = angles(n2, n1)
-		s2, d2, r2 = angles(n1, n2)
-	else:
-		s1, d1, r1 = (None, None, None)
-		s2, d2, r2 = (None, None, None)
-	return {'dc_perc':dc_perc, 'clvd_perc':clvd_perc, 'iso_perc':iso_perc, 'mom':moment, 'Mw':Mw, 'eigvecs':v, 'eigvals':m,
-		'p':p, 't':t, 'n':n, 
-		's1':s1, 'd1':d1, 'r1':r1, 's2':s2, 'd2':d2, 'r2':r2, 
-		'faultplanes':[(s1, d1, r1), (s2, d2, r2)]}
-
-def angles(n1, n2):
-	"""
-	Calculate strike, dip, and rake from normals to the fault planes.
-	
-	:param n1, n2: normals to the fault planes
-	:type n1, n2: list or 1-D array of 3 floats
-	:return: return a tuple of the strike, dip, and rake (one of two possible solutions; the second can be obtained by switching parameters ``n1`` and ``n2``)
-	
-	Written according to the fortran program sile4_6acek.for by J. Sileny
-	"""
-	eps = 1e-3
-	if n1[2] > 0:
-		n2 *= -1
-		n1 *= -1
-	if -n1[2] < 1:
-		dip = np.arccos(-n1[2])
-	else:
-		dip = 0.
-	if abs(abs(n1[2])-1) < eps: # n1[2] close to +-1
-		rake = 0.
-		strike = np.arctan2(n2[1], n2[0])
-		if strike < 0: strike += 2*np.pi
-	else:
-		strike = np.arctan2(-n1[0], n1[1])
-		if strike < 0: strike += 2*np.pi
-		cf = np.cos(strike)
-		sf = np.sin(strike)
-		if abs(n1[2]) < eps:
-			if abs(strike) < eps:
-				rake = np.arctan2(-n2[2], n2[0])
-			elif abs(abs(strike)-np.pi/2) < eps:
-				rake = np.arctan2(-n2[2], n2[1])
-			else:
-				if abs(cf) > abs(sf):
-					rake = np.arctan2(-n2[2], n2[0]/cf)
-				else:
-					rake = np.arctan2(-n2[2], n2[1]/sf)
-		else:
-			rake = np.arctan2((n2[0]*sf-n2[1]*cf)/-n1[2], n2[0]*cf+n2[1]*sf)
-	strike, dip, rake = np.rad2deg((strike, dip, rake))
-	return strike, dip, rake
 
 def align_yaxis(ax1, ax2, v1=0, v2=0):
 	"""
@@ -168,16 +60,6 @@ def align_yaxis(ax1, ax2, v1=0, v2=0):
 	miny, maxy = ax2.get_ylim()
 	ax2.set_ylim(miny+dy, maxy+dy)
 	
-def my_filter(data, fmin, fmax):
-	"""
-	Filter used for filtering both elementary and observed seismograms
-	"""
-	if fmax:
-		data.filter('lowpass', freq=fmax)
-	if fmin:
-		data.filter('highpass', freq=fmin, corners=2)
-		data.filter('highpass', freq=fmin, corners=2)
-
 def decimate(a, n=2):
 	"""
 	Decimates given sequence.
@@ -203,228 +85,6 @@ def decimate(a, n=2):
 	else:
 		return a[1:npts:n].real
 
-
-def Green_wrapper(i, model, x, y, z, npts_exp, elemse_start_origin, logfile='output/log_green.txt'):
-	"""
-	Evaluate Green's function using code ``Axitra`` (programs ``gr_xyz`` and ``elemse``) in a given grid point.
-	
-	:param i: number (identifier) of grid point
-	:type i: integer
-	:param model: identifier of crust model
-	:type model: string
-	:param x: source coordinate in N-S direction [m] (positive to the north)
-	:type x: float
-	:param y: source coordinate in E-W direction [m] (positive to the east)
-	:type y: float
-	:param z: source depth [m] (positive down)
-	:type z: float
-	:param npts_exp: the number of samples in the computation is :math:`2^{\mathrm{npts\_exp}}`
-	:type npts_exp: integer
-	:param elemse_start_origin: time between elementary seismogram start and elementary seismogram origin time
-	:type elemse_start_origin: float
-	:param logfile: path to text file, where are details about computation logged
-	:type logfile: string, optional
-	
-	Remark: because of paralelisation, this wrapper cannot be part of class :class:`ISOLA`.
-	"""
-	iter_max = 10
-	point_id = str(i).zfill(4)
-	if model:
-		point_id += '-' + model
-
-	log = open(logfile, 'a')
-	meta = open('green/elemse'+point_id+'.txt', 'w')
-	for iter in range(iter_max):
-		process = subprocess.Popen(['./gr_xyz', '{0:1.3f}'.format(x/1e3), '{0:1.3f}'.format(y/1e3), '{0:1.3f}'.format(z/1e3), point_id, model], stdout=subprocess.PIPE, cwd='green') # spustit GR_XYZ
-		out, err = process.communicate()
-		if not out and not err:
-			break
-		else:
-			if iter == iter_max-1:
-				log.write('grid point {0:3d}, gr_xyz failed {1:2d} times, POINT SKIPPED\n'.format(i, iter))
-				return False
-	log.write('grid point {0:3d}, {1:2d} calculation(s)\n'.format(i, iter+1))
-	process = subprocess.Popen(['./elemse', str(npts_exp), point_id, "{0:8.3f}".format(elemse_start_origin)], stdout=subprocess.PIPE, cwd='green') # spustit CONSHIFT
-	out, err = process.communicate()
-	if out or err:
-		log.write('grid point {0:3d}: elemse FAILED\n'.format(i, iter))
-		return False
-	log.close()
-	meta.write('{0:1.3f} {1:1.3f} {2:1.3f}'.format(x/1e3, y/1e3, z/1e3))
-	meta.close()
-	return True
-
-def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, stations, npts_elemse, npts_slice, elemse_start_origin, deviatoric=False, decomp=True, invert_displacement=False):
-	"""
-	Solves inverse problem in a single grid point for multiple time shifts.
-	
-	:param point_id: grid point id, elementary seismograms are readed from 'green/elemse'+point_id+'.dat'
-	:type point_id: string	
-	:param d_shifts: list of shifted data vectors :math:`d`
-	:type d_shifts: list of :class:`~numpy.ndarray`
-	:param norm_d: list of norms of vectors :math:`d`
-	:type norm_d: list of floats
-	:param Cd_inv: inverse of the data covariance matrix :math:`C_D^{-1}` saved block-by-block
-	:type Cd_inv: list of :class:`~numpy.ndarray`
-	:param Cd_inv_shifts: inverse of the data covariance matrix :math:`C_D^{-1}` saved block-by-block (for all time shifts - ACF)
-	:type Cd_inv_shifts: list of :class:`~numpy.ndarray`
-	:param nr: number of receivers
-	:type nr: integer
-	:param comps: number of components used in inversion
-	:type comps: integer
-	:param stations: TODO popsat
-	:type stations: TODO popsat
-	:param npts_elemse: number of points of elementary seismograms
-	:type npts_elemse: integer
-	:param npts_slice: number of points of seismograms used in inversion (npts_slice <= npts_elemse)
-	:type npts_slice: integer
-	:param fmin: lower frequency for filtering elementary seismogram
-	:type fmin: float
-	:param fmax: higher frequency for filtering elementary seismogram
-	:type fmax: float
-	:param elemse_start_origin: time between elementary seismogram start and elementary seismogram origin time
-	:type elemse_start_origin: float
-	:param deviatoric: if ``True``, invert only deviatoric part of moment tensor (5 components), otherwise full moment tensor (6 components)
-	:type deviatoric: bool, optional
-	:param decomp: if ``True``, decomposes found moment tensor in each grid point
-	:type decomp: bool, optional
-	:param invert_displacement: TODO popsat
-	:type invert_displacement: bool, optional
-	:returns: Dictionary {'shift': order of `d_shift` item, 'a': coeficients of the elementary seismograms, 'VR': variance reduction, 'CN' condition number, and moment tensor decomposition (keys described at function :func:`decompose`)}
-	
-	It reads elementary seismograms for specified grid point, filter them and creates matrix :math:`G`.
-	Calculates :math:`G^T`, :math:`G^T G`, :math:`(G^T G)^{-1}`, and condition number of :math:`G^T G` (using :func:`~np.linalg.cond`)
-	Then reads shifted vectors :math:`d` and for each of them calculates :math:`G^T d` and the solution :math:`(G^T G)^{-1} G^T d`. Calculates variance reduction (VR) of the result.
-	
-	Finally chooses the time shift where the solution had the best VR and returns its parameters.
-	
-	Remark: because of parallelisation, this wrapper cannot be part of class :class:`ISOLA`.
-	"""
-
-	# params: grid[i]['id'], self.d_shifts, self.Cd_inv, self.nr, self.components, self.stations, self.npts_elemse, self.npts_slice, self.elemse_start_origin, self.deviatoric, self.decompose
-	if deviatoric: ne=5
-	else: ne=6
-	elemse = read_elemse(nr, npts_elemse, 'green/elemse'+point_id+'.dat', stations, invert_displacement) # nacist elemse
-	#elemse[0][0].plot() # DEBUG
-	
-	# filtrovat elemse
-	for r in range(nr):
-		for i in range(ne):
-			#elemse[r][i].filter('highpass', freq=0.01) # DEBUG - pri instrumentalni korekci to same
-			my_filter(elemse[r][i], stations[r]['fmin'], stations[r]['fmax'])
-	#elemse[0][0].plot() # DEBUG
-	
-	if npts_slice != npts_elemse:
-		dt = elemse[0][0][0].stats.delta
-		for st6 in elemse:
-			for st in st6:
-				#st.trim(UTCDateTime(0)+dt*elemse_start_origin, UTCDateTime(0)+dt*npts_slice+dt*elemse_start_origin+1)
-				st.trim(UTCDateTime(0)+elemse_start_origin)
-		npts = npts_slice
-	else:
-		npts = npts_elemse
-	#elemse[0][0].plot() # DEBUG
-
-	# RESIT OBRACENOU ULOHU
-	# pro kazdy bod site a cas zdroje
-	#   m = (G^T G)^-1 G^T d
-	#     pamatovat si m, misfit, kondicni cislo, prip. singularni cisla
-
-	c = 0
-	G = np.empty((comps*npts, ne))
-	for r in range(nr):
-		for comp in range(3):
-			if stations[r][{0:'useZ', 1:'useN', 2:'useE'}[comp]]: # this component has flag 'use in inversion'
-				weight = stations[r][{0:'weightZ', 1:'weightN', 2:'weightE'}[comp]]
-				for i in range(npts):
-					for e in range(ne):
-						G[c*npts+i, e] = elemse[r][e][comp].data[i] * weight
-				c += 1
-
-	res = {}
-	sum_c = 0
-	for shift in range(len(d_shifts)):
-		d_shift = d_shifts[shift]
-		# d : vector of data shifted
-		#   shift>0 means that elemse start `shift` samples after data zero time
-
-		if Cd_inv_shifts:  # ACF
-			Cd_inv = Cd_inv_shifts[shift]
-			
-		if 'Gt' in vars() and not Cd_inv_shifts: # Gt is the same as at the previous shift
-			pass
-		elif Cd_inv:
-			# evaluate G^T C_D^{-1}
-			# G^T C_D^{-1} is in ``GtCd`` saved block-by-block, in ``Gt`` in one ndarray
-			idx = 0
-			GtCd = []
-			#print('\nINVERT')
-			for C in Cd_inv:
-				size = len(C)
-				#print(G.shape, size, idx, G[idx:idx+size, : ].T.shape, C.shape) # DEBUG
-				GtCd.append(np.dot(G[idx:idx+size, : ].T, C))
-				idx += size
-			Gt = np.concatenate(GtCd, axis=1)
-		else:
-			Gt = G.transpose()
-		
-		if not 'det_Ca' in vars() or Cd_inv_shifts: # first cycle or Cd_inv is dependent on shift - must be recalculated
-			GtG = np.dot(Gt,G)
-			CN = np.sqrt(np.linalg.cond(GtG)) # condition number
-			GtGinv = np.linalg.inv(GtG)
-			det_Ca = np.linalg.det(GtGinv)
-			#print('det', det_Ca) # DEBUG
-
-		# Gtd
-		Gtd = np.dot(Gt,d_shift)
-
-		# result : coeficients of elementary seismograms
-		a = np.dot(GtGinv,Gtd)
-		#a[0] = 1.; a[1] = 2.; a[2] = 3.; a[3] = 4.; a[4] = 5.; a[5] = 6.
-		if deviatoric: a = np.append(a, [[0.]], axis=0)
-		
-		if Cd_inv:
-			dGm = d_shift - np.dot(G, a[:ne]) # dGm = d_obs - G m
-			idx = 0
-			dGmCd_blocks = []
-			for C in Cd_inv:
-				size = len(C)
-				dGmCd_blocks.append(np.dot(dGm[idx:idx+size, : ].T, C))
-				idx += size
-			dGmCd = np.concatenate(dGmCd_blocks, axis=1)
-			misfit = np.dot(dGmCd, dGm)[0,0]
-		else:
-			synt = np.zeros(comps*npts)
-			for i in range(ne):
-				synt += G[:,i] * a[i]
-			misfit = 0
-			for i in range(npts*comps):
-				misfit += (d_shift[i,0]-synt[i])**2
-		VR = 1 - misfit / norm_d[shift]
-
-		res[shift] = {}
-		res[shift]['a'] = a.copy()
-		res[shift]['misfit'] = misfit
-		res[shift]['VR'] = VR
-		res[shift]['CN'] = CN
-		res[shift]['GtGinv'] = GtGinv
-		res[shift]['det_Ca'] = det_Ca
-
-	shift = max(res, key=lambda s: res[s]['VR']) # best shift
-
-	r = {}
-	r['shift'] = shift
-	r['a'] = res[shift]['a'].copy()
-	r['VR'] = res[shift]['VR']
-	r['misfit'] = res[shift]['misfit']
-	r['CN'] = res[shift]['CN']
-	r['GtGinv'] = res[shift]['GtGinv']
-	r['det_Ca'] = res[shift]['det_Ca']
-	r['shifts'] = res
-	#r['res'] = res
-	if decomp:
-		r.update(decompose(a2mt(r['a']))) # add MT decomposition to dict `r`
-	return r
 
 def tukeywin(window_length, alpha=0.5):
     '''
@@ -606,6 +266,9 @@ class ISOLA:
     ``rupture_length`` : float
         Estimated length of the rupture in meters
 	"""
+
+	from _html import html_log
+
 	def __init__(self, location_unc=0, depth_unc=0, time_unc=0, deviatoric=False, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, threads=2, invert_displacement=False, circle_shape=True, use_precalculated_Green=False, rupture_velocity=1000, s_velocity=3000, decompose=True, outdir='output', logfile='$outdir/log.txt'):
 		self.location_unc = location_unc # m
 		self.depth_unc = depth_unc # m
@@ -2356,7 +2019,7 @@ class ISOLA:
 
 	def calculate_Green(self):
 		"""
-		Runs :func:`Green_wrapper` (Green's function calculation) in parallel.
+		Runs :func:`Axitra_wrapper` (Green's function calculation) in parallel.
 		"""
 		logfile = self.outdir+'/log_green.txt'
 		open(logfile, "w").close() # erase file contents
@@ -2364,7 +2027,7 @@ class ISOLA:
 		for model in self.models:
 			if self.threads > 1: # parallel
 				pool = mp.Pool(processes=self.threads)
-				results = [pool.apply_async(Green_wrapper, args=(i, model, self.grid[i]['x'], self.grid[i]['y'], self.grid[i]['z'], self.npts_exp, self.elemse_start_origin, logfile)) for i in range(len(self.grid))]
+				results = [pool.apply_async(Axitra_wrapper, args=(i, model, self.grid[i]['x'], self.grid[i]['y'], self.grid[i]['z'], self.npts_exp, self.elemse_start_origin, logfile)) for i in range(len(self.grid))]
 				output = [p.get() for p in results]
 				for i in range (len(self.grid)):
 					if output[i] == False:
@@ -2373,7 +2036,7 @@ class ISOLA:
 			else: # serial
 				for i in range (len(self.grid)):
 					gp = self.grid[i]
-					Green_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin, logfile)
+					Axitra_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin, logfile)
 
 	def run_inversion(self):
 		"""
@@ -3736,5 +3399,3 @@ class ISOLA:
 			plt.show()
 		plt.clf()
 		plt.close('all')
-	
-	from html import html_log as html_log
