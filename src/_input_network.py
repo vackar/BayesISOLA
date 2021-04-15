@@ -82,7 +82,7 @@ def read_network_info_DB(self, db, host, port=-1, user=None, password=None, min_
 	self.create_station_index()
 	self.models[''] = 0
 
-def read_network_coordinates(self, filename, network='', location='', channelcode='LH', write='green/station.dat', min_distance=0., max_distance=999e3):
+def read_network_coordinates(self, filename, network='', location='', channelcode='LH', min_distance=0., max_distance=999e3):
 	"""
 	Read informations about stations from file in ISOLA format.
 	Calculate their distances and azimuthes using WGS84 elipsoid.
@@ -96,8 +96,6 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 	:type location: string, optional
 	:param channelcode: component names of all stations start with these letters (if channelcode is `LH`, component names will be `LHZ`, `LHN`, and `LHE`)
 	:type channelcode: string, optional
-	:param write: if not null, specifies name of created file with carthesian coordinates of stations (writed by :func:`write_stations`); if `Null`, no file is created
-	:type write: string, optional or `Null`
 	:param min_distance: minimal epicentral distance in meters
 	:param min_distance: float or None
 	:param min_distance: maximal epicentral distance in meters
@@ -152,8 +150,6 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 		stats = stats[0:21] # BECAUSE OF GREENS FUNCTIONS CALCULATION
 	self.stations = stats
 	self.create_station_index()
-	if write:
-		self.write_stations(filename=write)
 	
 def create_station_index(self):
 	"""
@@ -170,7 +166,7 @@ def write_stations(self, filename='green/station.dat'):
 	"""
 	Write file with carthesian coordinates of stations. The file is necessary for Axitra code.
 	
-	This function is usually called from :func:`read_network_coordinates`.
+	This function is usually called from some of functions related to reading seismograms.
 	
 	:param filename: name (with path) to created file
 	:type filename: string, optional
@@ -182,6 +178,7 @@ def write_stations(self, filename='green/station.dat'):
 			f = filename
 		outp = open(f, 'w')
 		outp.write(' Station co-ordinates\n x(N>0,km),y(E>0,km),z(km),azim.,dist.,stat.\n')
+		self.models[model] = 0
 		for s in self.stations:
 			if s['model'] != model:
 				continue

@@ -82,6 +82,7 @@ def load_streams_fdsnws(self, hosts, t_before=90, t_after=360, save_to=None):
 		i += 1
 	self.data_are_corrected = False
 	self.check_a_station_present()
+	self.write_stations()
 
 def load_streams_ArcLink(self, host, user='', t_before=90, t_after=360):
 	"""
@@ -130,4 +131,5 @@ def load_streams_ArcLink(self, host, user='', t_before=90, t_after=360):
 		i += 1
 	self.data_are_corrected = False
 	self.check_a_station_present()
+	self.write_stations()
 

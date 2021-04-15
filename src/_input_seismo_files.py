@@ -276,6 +276,7 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 			else:
 				i += 1 # station not removed
 	self.check_a_station_present()
+	self.write_stations()
 
 def load_NIED_files(self, dir='.', prefix='', dateString='', suffix='1', separator='.'):
 	"""
@@ -337,6 +338,7 @@ def load_NIED_files(self, dir='.', prefix='', dateString='', suffix='1', separat
 			continue
 		i += 1 # station not removed
 	self.check_a_station_present()
+	self.write_stations()
 
 def check_a_station_present(self):
 	"""
