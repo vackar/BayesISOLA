@@ -182,7 +182,7 @@ class ISOLA:
 	from _input_event import read_event_info, set_event_info
 	from _input_network import read_network_info_DB, read_network_coordinates, create_station_index, write_stations
 	from _input_seismo_files import add_NEZ, add_SAC, add_NIED, load_files, load_NIED_files, check_a_station_present
-	from _input_seismo_remote import load_streams_ArcLink
+	from _input_seismo_remote import load_streams_ArcLink, load_streams_fdsnws
 	from _covariance_matrix import covariance_matrix, covariance_matrix_SACF, covariance_matrix_ACF
 	from _plot import plot_MT, plot_uncertainty, plot_MT_uncertainty_centroid, plot_maps, plot_slices, plot_maps_sum, plot_map_backend, plot_3D, plot_seismo, plot_covariance_function, plot_noise, plot_spectra, plot_seismo_backend_1, plot_seismo_backend_2, plot_stations, plot_covariance_matrix
 	from _html import html_log
@@ -268,8 +268,6 @@ class ISOLA:
 		if printcopy:
 			print(s)
 	
-	
-
 	def detect_mouse(self, mouse_len = 2.5*60, mouse_onset = 1*60, fit_t1=-20, fit_t2c=0, fit_t2v=1200, figures=None, figures_mkdir=True):
 		"""
 		Wrapper for :class:`MouseTrap`
@@ -323,7 +321,6 @@ class ISOLA:
 						m1.plot(st[comp], outfile=os.path.join(figures, 'mouse_'+('no','YES')[detected]+'_'+sta+str(comp)+'.png'), xmin=t_start_origin-60, xmax=t_start_origin+240, ylabel='raw displacement [counts]', title="{{net:s}}:{{sta:s}} {{ch:s}}, fit: {fit:4.2f}".format(fit=fit))
 		self.logtext['mouse'] = out
 		self.log(out, newline=False)
-
 
 	def set_frequencies(self, fmax, fmin=0., wavelengths=5):
 		"""
@@ -1073,4 +1070,3 @@ class ISOLA:
 				d[:, 3*r+comp] = data[r][comp][0:npts]
 		np.save(file_d, d)
 		np.save(file_synt, synt)
-

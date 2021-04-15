@@ -280,8 +280,8 @@ class mouse:
 		t = np.arange(0, (npts-0.5) / samprate, 1 / samprate)
 		fit_t0 = self.onset_found - self.fit_time_before
 		fit_t1 = self.onset_found + self.fit_time_after
-		samp_0 = int((self.onset - self.fit_time_before) / self.dt)
-		samp_1 = int((self.onset + self.fit_time_after ) / self.dt)
+		samp_0 = int(np.round((self.onset - self.fit_time_before) / self.dt))
+		samp_1 = int(np.round((self.onset + self.fit_time_after ) / self.dt))
 		t2 = np.arange(fit_t0, fit_t1 - 0.5/samprate, 1 / samprate)
 		colors = {'N':'r', 'E':'g', 'Z':'b'}
 		plt.rcParams.update({'font.size': 20})

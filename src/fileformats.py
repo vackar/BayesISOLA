@@ -68,14 +68,14 @@ def read_elemse(nr, npts, filename, stations, invert_displacement=False):
 	del ff
 	return elemse_all
 
-def attach_xml_paz(st, paz_file):
+def attach_xml_paz(st, paz_file=None):
 	"""
 	Attaches an XML response file to a stream.
 	
 	:param st: Stream
 	:type tr: :class:`~obspy.core.stream.Stream`
-	:param paz_file: path to XML response file
-	:type paz_file: string
+	:param paz_file: path to XML response file (if ``None``, just copy values from ``tr.stats.response`` to ``tr.stats.paz``)
+	:type paz_file: string, optional
 	"""
 	inv = read_inventory(paz_file)
 	st.attach_response(inv)
