@@ -19,10 +19,10 @@ from matplotlib.lines import Line2D
 from matplotlib import animation
 from mpl_toolkits.mplot3d import Axes3D
 
-from MT_comps import a2mt, decompose
-from histogram import histogram
-from fileformats import read_elemse
-from functions import my_filter
+from BayesISOLA.MT_comps import a2mt, decompose
+from BayesISOLA.histogram import histogram
+from BayesISOLA.fileformats import read_elemse
+from BayesISOLA.helpers import my_filter
 
 def align_yaxis(ax1, ax2, v1=0, v2=0):
 	"""

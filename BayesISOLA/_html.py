@@ -5,8 +5,7 @@ import numpy as np
 import textwrap
 import re # RegExp
 
-#from functions import *
-from MT_comps import a2mt
+from BayesISOLA.MT_comps import a2mt
 
 def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT=None, plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None, plot_seismo_sharey=None, mouse_figures=None, plot_spectra=None, plot_noise=None, plot_covariance_function=None, plot_covariance_matrix=None, plot_maps=None, plot_slices=None, plot_maps_sum=None):
 	"""

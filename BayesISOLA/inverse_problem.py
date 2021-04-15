@@ -5,9 +5,9 @@ import numpy as np
 
 from obspy import UTCDateTime
 
-from fileformats import read_elemse
-from functions import my_filter
-from MT_comps import decompose, a2mt
+from BayesISOLA.fileformats import read_elemse
+from BayesISOLA.helpers import my_filter
+from BayesISOLA.MT_comps import decompose, a2mt
 
 def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, stations, npts_elemse, npts_slice, elemse_start_origin, deviatoric=False, decomp=True, invert_displacement=False):
 	"""

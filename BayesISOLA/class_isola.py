@@ -25,12 +25,12 @@ from obspy import UTCDateTime
 
 #from nearest_correlation import nearcorr # nearest correlation matrix
 
-from MouseTrap import *
-from functions import *
-from fileformats import *
-from inverse_problem import invert
-from MT_comps import *
-from axitra import Axitra_wrapper
+from BayesISOLA.MouseTrap import *
+from BayesISOLA.helpers import *
+from BayesISOLA.fileformats import *
+from BayesISOLA.inverse_problem import invert
+from BayesISOLA.MT_comps import *
+from BayesISOLA.axitra import Axitra_wrapper
 
 
 class ISOLA:
@@ -178,14 +178,14 @@ class ISOLA:
         Estimated length of the rupture in meters
 	"""
 
-	from _input_crust import read_crust
-	from _input_event import read_event_info, set_event_info
-	from _input_network import read_network_info_DB, read_network_coordinates, create_station_index, write_stations
-	from _input_seismo_files import add_NEZ, add_SAC, add_NIED, load_files, load_NIED_files, check_a_station_present
-	from _input_seismo_remote import load_streams_ArcLink, load_streams_fdsnws
-	from _covariance_matrix import covariance_matrix, covariance_matrix_SACF, covariance_matrix_ACF
-	from _plot import plot_MT, plot_uncertainty, plot_MT_uncertainty_centroid, plot_maps, plot_slices, plot_maps_sum, plot_map_backend, plot_3D, plot_seismo, plot_covariance_function, plot_noise, plot_spectra, plot_seismo_backend_1, plot_seismo_backend_2, plot_stations, plot_covariance_matrix
-	from _html import html_log
+	from BayesISOLA._input_crust import read_crust
+	from BayesISOLA._input_event import read_event_info, set_event_info
+	from BayesISOLA._input_network import read_network_info_DB, read_network_coordinates, create_station_index, write_stations
+	from BayesISOLA._input_seismo_files import add_NEZ, add_SAC, add_NIED, load_files, load_NIED_files, check_a_station_present
+	from BayesISOLA._input_seismo_remote import load_streams_ArcLink, load_streams_fdsnws
+	from BayesISOLA._covariance_matrix import covariance_matrix, covariance_matrix_SACF, covariance_matrix_ACF
+	from BayesISOLA._plot import plot_MT, plot_uncertainty, plot_MT_uncertainty_centroid, plot_maps, plot_slices, plot_maps_sum, plot_map_backend, plot_3D, plot_seismo, plot_covariance_function, plot_noise, plot_spectra, plot_seismo_backend_1, plot_seismo_backend_2, plot_stations, plot_covariance_matrix
+	from BayesISOLA._html import html_log
 
 	def __init__(self, location_unc=0, depth_unc=0, time_unc=0, deviatoric=False, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, threads=2, invert_displacement=False, circle_shape=True, use_precalculated_Green=False, rupture_velocity=1000, s_velocity=3000, decompose=True, outdir='output', logfile='$outdir/log.txt'):
 		self.location_unc = location_unc # m

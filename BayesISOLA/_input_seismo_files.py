@@ -4,7 +4,7 @@
 import os.path
 from obspy import read, Trace, Stream
 
-from fileformats import attach_ISOLA_paz, attach_xml_paz
+from BayesISOLA.fileformats import attach_ISOLA_paz, attach_xml_paz
 
 def add_NEZ(self, filename, network, station, starttime, channelcode='LH', location='', accelerograph=False):
 	"""

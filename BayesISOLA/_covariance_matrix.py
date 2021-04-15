@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from functions import decimate
+from BayesISOLA.helpers import decimate
 
 def tukeywin(window_length, alpha=0.5):
     '''

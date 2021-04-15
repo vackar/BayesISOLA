@@ -1,0 +1,10 @@
+examples/
+input/
+invert/
+output/
+green/grdat.hed
+green/elemse
+green/gr_xyz
+green/elemse[0-9]*
+green/gr[0-9]*
+green/station.dat
