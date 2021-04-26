@@ -131,7 +131,7 @@ def set_time_window(self):
 	"""
 	self.min_time(np.sqrt(self.stations[0]['dist']**2+self.depth_min**2))
 	self.max_time(np.sqrt(self.stations[self.nr-1]['dist']**2+self.depth_max**2))
-	self.t_min -= 20 # FIXED OPTION
+	#self.t_min -= 20 # FIXED OPTION
 	self.t_min = round(self.t_min * self.samprate) / self.samprate
 	if self.t_min > 0:
 		self.t_min = 0.
@@ -152,14 +152,22 @@ def set_parameters(self, fmax, fmin=0., wavelengths=5, min_depth=1000, log=True)
 	Technically, just runs following functions:
 		- :func:`set_frequencies`
 		- :func:`set_working_sampling`
+		- :func:`set_grid`
 		- :func:`set_time_window`
 		- :func:`set_Greens_parameters`
-		- :func:`set_grid`
 		- :func:`set_time_grid`
 		- :func:`count_components`
 	
 	The parameters are parameters of the same name of these functions.
 	"""
+	#self.set_frequencies(fmax, fmin, wavelengths)
+	#self.set_working_sampling()
+	#self.set_grid()
+	#self.set_time_window()
+	#self.set_Greens_parameters()
+	#self.set_time_grid()
+	#self.count_components(log)
+
 	self.set_frequencies(fmax, fmin, wavelengths)
 	self.set_working_sampling()
 	self.set_grid()

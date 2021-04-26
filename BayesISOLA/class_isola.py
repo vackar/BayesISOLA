@@ -1,19 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-#import numpy as np
-#import shutil
 import warnings
 warnings.filterwarnings("ignore",category=DeprecationWarning)
-warnings.filterwarnings('ignore', '.*Conversion of the second argument of issubdtype from.*') # Avoids following warning:
+warnings.filterwarnings('ignore', '.*Conversion of the second argument of issubdtype from.*')
+	# Avoids following warning:
 		# /usr/lib/python3.7/site-packages/obspy/signal/detrend.py:31: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
-
-#import obspy
-#from obspy import UTCDateTime
-
-#from BayesISOLA.helpers import *
-#from BayesISOLA.fileformats import *
-#from BayesISOLA.MT_comps import *
 
 
 class ISOLA:
@@ -266,4 +258,3 @@ class ISOLA:
 	def evalute_noise(self):
 		# compare spectrum of the signal and the noise
 		pass
-
