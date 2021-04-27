@@ -170,10 +170,10 @@ def set_parameters(self, fmax, fmin=0., wavelengths=5, min_depth=1000, log=True)
 
 	self.set_frequencies(fmax, fmin, wavelengths)
 	self.set_working_sampling()
-	self.set_grid()
+	self.set_grid() # must be after set_working_sampling
+	self.set_time_grid()
 	self.set_time_window()
 	self.set_Greens_parameters()
-	self.set_time_grid()
 	self.count_components(log)
 
 def skip_short_records(self, noise=False):
