@@ -42,9 +42,9 @@ def running_mean(x, N):
 	return rm
 
 
-def covariance_matrix(self, crosscovariance=False, save_non_inverted=False, save_covariance_function=False):
+def covariance_matrix_noise(self, crosscovariance=False, save_non_inverted=False, save_covariance_function=False):
 	"""
-	Creates covariance matrix :math:`C_D` from ``self.noise``.
+	Creates covariance matrix :math:`C_D` from ``self.d.noise``.
 	
 	:type crosscovariance: bool, optional
 	:param crosscovariance: Set ``True`` to calculate crosscovariance between components. If ``False``, it assumes that noise at components is not correlated, so non-diagonal blocks are identically zero.
@@ -54,10 +54,10 @@ def covariance_matrix(self, crosscovariance=False, save_non_inverted=False, save
 	:param save_covariance_function: If ``True``, save also the covariance function matrix, which can be plotted later.
 	"""
 	self.log('\nCreating covariance matrix')
-	if not self.noise:
+	if not self.d.noise:
 		self.log('No noise slice to generate covariance matrix. Some of records probably too short or noise slices not generated [param noise_slice at func trim_filter_data()]. Exiting...', printcopy=True)
 		raise ValueError('No noise slice to generate covariance matrix.')
-	n = self.npts_slice
+	n = self.d.npts_slice
 	self.Cf = []
 	for r in range(len(self.stations)):
 		sta = self.stations[r]
@@ -74,7 +74,7 @@ def covariance_matrix(self, crosscovariance=False, save_non_inverted=False, save
 				I = idx.index(i)*n
 				for j in idx:
 					if i == j:
-						corr = np.correlate(self.noise[r][i].data, self.noise[r][i].data, 'full') / len(self.noise[r][i].data)
+						corr = np.correlate(self.d.noise[r][i].data, self.d.noise[r][i].data, 'full') / len(self.d.noise[r][i].data)
 						corr = decimate(corr, 2) # noise has 2-times higher sampling than data
 						middle = int((len(corr)-1)/2)
 						if save_covariance_function:
@@ -93,8 +93,8 @@ def covariance_matrix(self, crosscovariance=False, save_non_inverted=False, save
 					J = idx.index(j)*n
 					if i > j:
 						continue
-					#index,value,corr = xcorr(self.noise[r][i], self.noise[r][j], n, True) # there was some problem with small numbers, solved by tr.data *= 1e20
-					corr = np.correlate(self.noise[r][i].data, self.noise[r][j].data, 'full') / len(self.noise[r][i].data)
+					#index,value,corr = xcorr(self.d.noise[r][i], self.d.noise[r][j], n, True) # there was some problem with small numbers, solved by tr.data *= 1e20
+					corr = np.correlate(self.d.noise[r][i].data, self.d.noise[r][j].data, 'full') / len(self.d.noise[r][i].data)
 					corr = decimate(corr, 2) # noise has 2-times higher sampling than data
 					middle = int((len(corr)-1)/2)
 					if save_covariance_function:
@@ -177,7 +177,7 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 	self.log('\nCreating SACF covariance matrix')
 	self.log('signal duration {0:5.1f} sec'.format(T))
 	self.log('station         \t L1 (sec)')
-	n = self.npts_slice
+	n = self.d.npts_slice
 	
 	# Get components variance
 	d_variance = []
@@ -218,7 +218,7 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 				if i == j:
 					
 					# Prepare parameters
-					nsampl = self.npts_slice
+					nsampl = self.d.npts_slice
 					dt = 1/self.samprate
 					L1s = round(L1/dt)
 					
@@ -331,7 +331,7 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 	"""
 	self.log('\nCreating ACF covariance matrix')
 	self.log('station         \t L1 (sec)')
-	n = self.npts_slice
+	n = self.d.npts_slice
 	
 	for shift in range(len(self.d_shifts)):
 		d_shift = self.d_shifts[shift]
@@ -371,7 +371,7 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 					if i == j:
 						
 						# Prepare parameters
-						nsampl = self.npts_slice
+						nsampl = self.d.npts_slice
 						dt = 1/self.samprate
 						L1s = round(L1/dt)
 						L12s = 1

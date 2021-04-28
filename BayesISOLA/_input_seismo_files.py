@@ -9,7 +9,7 @@ from BayesISOLA.fileformats import attach_ISOLA_paz, attach_xml_paz
 def add_NEZ(self, filename, network, station, starttime, channelcode='LH', location='', accelerograph=False):
 	"""
 	Read stream from four column file (t, N, E, Z) (format used in ISOLA).
-	Append the stream to ``self.data``.
+	Append the stream to ``self.data_raw``.
 	If its sampling is not contained in ``self.data_deltas``, add it there.
 	
 	:param filename: path to input file
@@ -60,7 +60,7 @@ def add_NEZ(self, filename, network, station, starttime, channelcode='LH', locat
 		f[comp].stats.sampling_rate = samprate
 		f[comp].stats.delta = delta
 	st = Stream(traces=[f['Z'], f['N'], f['E']])
-	self.data.append(st)
+	self.data_raw.append(st)
 	if not delta in self.data_deltas:
 		self.data_deltas.append(delta)
 	# set flag "use in inversion" for all components
@@ -199,7 +199,7 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 	"""
 	self.logtext['data'] = s = '\nLoading data from files.\n\tdata dir: {0:s}\n\tp&z dir:  {1:s}'.format(dir, [pz_dir,xml_dir][bool(xml_dir)])
 	self.log('\n'+s)
-	loaded = len(self.data)+len(self.data_raw)
+	loaded = len(self.data_raw)
 	#for i in range(self.nr):
 	i = 0
 	while i < len(self.stations):
@@ -302,7 +302,7 @@ def load_NIED_files(self, dir='.', prefix='', dateString='', suffix='1', separat
 	
 	"""
 	self.log('\nLoading data from files.\n\tdata dir: {0:s}'.format(dir))
-	loaded = len(self.data)+len(self.data_raw)
+	loaded = len(self.data_raw)
 	#for i in range(self.nr):
 	i = 0
 	while i < len(self.stations):

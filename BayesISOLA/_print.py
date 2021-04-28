@@ -23,7 +23,7 @@ def print_solution(self):
 		self.log('  time: {0:5.2f} s after origin time\n'.format(C['shift']))
 	else:
 		self.log('  time: {0:5.2f} s before origin time\n'.format(-C['shift']))
-	if C['shift'] in (self.shifts[0], self.shifts[-1]):
+	if C['shift'] in (self.d.shifts[0], self.d.shifts[-1]):
 		self.log('  Warning: the solution lies on the edge of the time-grid!')
 	self.log('  VR: {0:4.0f} %\n  CN: {1:4.0f}'.format(C['VR']*100, C['CN']))
 	#self.log('  VR: {0:8.4f} %\n  CN: {1:4.0f}'.format(C['VR']*100, C['CN'])) # DEBUG

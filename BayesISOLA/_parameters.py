@@ -23,30 +23,56 @@ def set_frequencies(self, fmax, fmin=0., wavelengths=5):
 	
 	where `r` is the distance the source and the station.
 	"""
-	for stn in self.stations:
-		dist = np.sqrt(stn['dist']**2 + self.event['depth']**2)
+	for stn in self.d.stations:
+		dist = np.sqrt(stn['dist']**2 + self.d.event['depth']**2)
 		stn['fmax'] = min(wavelengths * self.s_velocity / dist, fmax)
 		stn['fmin'] = fmin
 		self.fmax = max(self.fmax, stn['fmax'])
-	#self.count_components()
+
+def set_working_sampling(self, multiple8=False):
+	"""
+	Determine maximal working sampling as at least 8-multiple of maximal inverted frequency (``self.fmax``). If needed, increases the value to eneables integer decimation factor.
+	
+	:param multiple8: if ``True``, force the decimation factor to be such multiple, that decimation can be done with factor 8 (more times, if needed) and finaly with factor <= 8. The reason for this is decimation pre-filter unstability for higher decimation factor (now not needed).
+	:type multiple8: bool, optional
+	"""
+	#min_sampling = 4 * self.fmax
+	min_sampling = 8 * self.fmax # teoreticky 4*fmax aby fungovala L2 norma????
+	SAMPRATE = 1. / lcmm(*self.d.data_deltas) # kazda stanice muze mit jine vzorkovani, bereme nejvetsiho spolecneho delitele (= 1. / nejmensi spolecny nasobek)
+	decimate = SAMPRATE / min_sampling
+	if multiple8:
+		if decimate > 128:
+			decimate = int(decimate/64) * 64
+		elif decimate > 16:
+			decimate = int(decimate/8) * 8
+		else:
+			decimate = int(decimate)
+	else:
+		decimate = int(decimate)
+	self.max_samprate = SAMPRATE
+	# print(min_sampling, SAMPRATE, decimate) # DEBUG
+	# print(self.d.data_deltas) # DEBUG
+	self.samprate = SAMPRATE / decimate
+	self.logtext['samplings'] = samplings_str = ", ".join(["{0:5.1f} Hz".format(1./delta) for delta in  self.d.data_deltas])
+	self.log('\nSampling frequencies:\n  Data sampling: {0:s}\n  Common sampling: {3:5.1f}\n  Decimation factor: {1:3d} x\n  Sampling used: {2:5.1f} Hz'.format(samplings_str, decimate, self.samprate, SAMPRATE))
 
 def count_components(self, log=True):
 	"""
-	Counts number of components, which should be used in inversion (e.g. ``self.stations[n]['useZ'] = True`` for `Z` component). This is needed for allocation proper size of matrices used in inversion.
+	Counts number of components, which should be used in inversion (e.g. ``self.d.stations[n]['useZ'] = True`` for `Z` component). This is needed for allocation proper size of matrices used in inversion.
 	
 	:param log: if true, write into log table of stations and components with information about component usage and weight
 	:type log: bool, optional
 	"""
 	c = 0
-	stn = self.stations
-	for r in range(self.nr):
+	stn = self.d.stations
+	for r in range(self.d.nr):
 		if stn[r]['useZ']: c += 1
 		if stn[r]['useN']: c += 1
 		if stn[r]['useE']: c += 1
 	self.components = c
 	if log:
 		out = '\nComponents used in inversion and their weights\nstation     \t   \t Z \t N \t E \tdist\tazimuth\tfmin\tfmax\n            \t   \t   \t   \t   \t(km)    \t(deg)\t(Hz)\t(Hz)\n'
-		for r in range(self.nr):
+		for r in range(self.d.nr):
 			out += '{net:>3s}:{sta:5s} {loc:2s}\t{ch:2s} \t'.format(sta=stn[r]['code'], net=stn[r]['network'], loc=stn[r]['location'], ch=stn[r]['channelcode'])
 			for c in range(3):
 				if stn[r][self.idx_use[c]]:
@@ -63,33 +89,6 @@ def count_components(self, log=True):
 			out += '\n'
 		self.logtext['components'] = out
 		self.log(out, newline=False)
-
-def set_working_sampling(self, multiple8=False):
-	"""
-	Determine maximal working sampling as at least 8-multiple of maximal inverted frequency (``self.fmax``). If needed, increases the value to eneables integer decimation factor.
-	
-	:param multiple8: if ``True``, force the decimation factor to be such multiple, that decimation can be done with factor 8 (more times, if needed) and finaly with factor <= 8. The reason for this is decimation pre-filter unstability for higher decimation factor (now not needed).
-	:type multiple8: bool, optional
-	"""
-	#min_sampling = 4 * self.fmax
-	min_sampling = 8 * self.fmax # teoreticky 4*fmax aby fungovala L2 norma????
-	SAMPRATE = 1. / lcmm(*self.data_deltas) # kazda stanice muze mit jine vzorkovani, bereme nejvetsiho spolecneho delitele (= 1. / nejmensi spolecny nasobek)
-	decimate = SAMPRATE / min_sampling
-	if multiple8:
-		if decimate > 128:
-			decimate = int(decimate/64) * 64
-		elif decimate > 16:
-			decimate = int(decimate/8) * 8
-		else:
-			decimate = int(decimate)
-	else:
-		decimate = int(decimate)
-	self.max_samprate = SAMPRATE
-	# print(min_sampling, SAMPRATE, decimate) # DEBUG
-	# print(self.data_deltas) # DEBUG
-	self.samprate = SAMPRATE / decimate
-	self.logtext['samplings'] = samplings_str = ", ".join(["{0:5.1f} Hz".format(1./delta) for delta in  self.data_deltas])
-	self.log('\nSampling frequencies:\n  Data sampling: {0:s}\n  Common sampling: {3:5.1f}\n  Decimation factor: {1:3d} x\n  Sampling used: {2:5.1f} Hz'.format(samplings_str, decimate, self.samprate, SAMPRATE))
 
 def min_time(self, distance, mag=0, v=8000):
 	"""
@@ -129,8 +128,8 @@ def set_time_window(self):
 	
 	:math:`\mathrm{npts\_slice} \le \mathrm{npts\_elemse} = 2^{\mathrm{npts\_exp}} < 2\cdot\mathrm{npts\_slice}`
 	"""
-	self.min_time(np.sqrt(self.stations[0]['dist']**2+self.depth_min**2))
-	self.max_time(np.sqrt(self.stations[self.nr-1]['dist']**2+self.depth_max**2))
+	self.min_time(np.sqrt(self.d.stations[0]['dist']**2+self.grid.depth_min**2))
+	self.max_time(np.sqrt(self.d.stations[self.d.nr-1]['dist']**2+self.grid.depth_max**2))
 	#self.t_min -= 20 # FIXED OPTION
 	self.t_min = round(self.t_min * self.samprate) / self.samprate
 	if self.t_min > 0:
@@ -153,25 +152,17 @@ def set_parameters(self, fmax, fmin=0., wavelengths=5, min_depth=1000, log=True)
 		- :func:`set_frequencies`
 		- :func:`set_working_sampling`
 		- :func:`set_grid`
+		- :func:`set_time_grid`
 		- :func:`set_time_window`
 		- :func:`set_Greens_parameters`
-		- :func:`set_time_grid`
 		- :func:`count_components`
 	
 	The parameters are parameters of the same name of these functions.
 	"""
-	#self.set_frequencies(fmax, fmin, wavelengths)
-	#self.set_working_sampling()
-	#self.set_grid()
-	#self.set_time_window()
-	#self.set_Greens_parameters()
-	#self.set_time_grid()
-	#self.count_components(log)
-
 	self.set_frequencies(fmax, fmin, wavelengths)
 	self.set_working_sampling()
-	self.set_grid() # must be after set_working_sampling
-	self.set_time_grid()
+	self.grid.set_grid() # must be after set_working_sampling
+	self.grid.set_time_grid(self.fmax, self.max_samprate)
 	self.set_time_window()
 	self.set_Greens_parameters()
 	self.count_components(log)
@@ -184,18 +175,18 @@ def skip_short_records(self, noise=False):
 	:type noise: bool or float, optional
 	"""
 	self.log('\nChecking record length:')
-	for st in self.data_raw:
+	for st in self.d.data_raw:
 		for comp in range(3):
 			stats = st[comp].stats
-			if stats.starttime > self.event['t'] + self.t_min + self.shift_min or stats.endtime < self.event['t'] + self.t_max + self.shift_max:
+			if stats.starttime > self.d.event['t'] + self.t_min + self.grid.shift_min or stats.endtime < self.d.event['t'] + self.t_max + self.grid.shift_max:
 				self.log('  ' + stats.station + ' ' + stats.channel + ': record too short, ignoring component in inversion')
-				self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])]['use'+stats.channel[2]] = False
+				self.d.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])]['use'+stats.channel[2]] = False
 			if noise:
 				if type(noise) in (float,int):
 					noise_len = noise
 				else:
-					noise_len = (self.t_max - self.t_min + self.shift_max + 10)*1.1 - self.shift_min - self.t_min
-					#print stats.station, stats.channel, noise_len, '>', self.event['t']-stats.starttime # DEBUG
-				if stats.starttime > self.event['t'] - noise_len:
+					noise_len = (self.t_max - self.t_min + self.grid.shift_max + 10)*1.1 - self.grid.shift_min - self.t_min
+					#print stats.station, stats.channel, noise_len, '>', self.d.event['t']-stats.starttime # DEBUG
+				if stats.starttime > self.d.event['t'] - noise_len:
 					self.log('  ' + stats.station + ' ' + stats.channel + ': record too short for noise covariance, ignoring component in inversion')
-					self.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])]['use'+stats.channel[2]] = False
+					self.d.stations_index['_'.join([stats.network, stats.station, stats.location, stats.channel[0:2]])]['use'+stats.channel[2]] = False

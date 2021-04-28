@@ -14,6 +14,10 @@ def run_inversion(self):
 	Module :class:`multiprocessing` does not allow running function of the same class in parallel, so the function :func:`invert` cannot be method of class :class:`ISOLA` and this wrapper is needed.
 	"""
 	grid = self.grid
+	d_shifts = self.d.d_shifts
+	Cd_inv = self.cova.Cd_inv
+	Cd_inv_shifts = self.cova.Cd_inv_shifts
+	
 	todo = []
 	for i in range (len(grid)):
 		point_id = str(i).zfill(4)
@@ -23,14 +27,14 @@ def run_inversion(self):
 	
 	# create norm_d[shift]
 	norm_d = []
-	for shift in range(len(self.d_shifts)):
-		d_shift = self.d_shifts[shift]
-		if self.Cd_inv_shifts:  # ACF
-			self.Cd_inv = self.Cd_inv_shifts[shift]
-		if self.Cd_inv:
+	for shift in range(len(d_shifts)):
+		d_shift = d_shifts[shift]
+		if Cd_inv_shifts:  # ACF
+			Cd_inv = Cd_inv_shifts[shift]
+		if Cd_inv:
 			idx = 0
 			dCd_blocks = []
-			for C in self.Cd_inv:
+			for C in Cd_inv:
 				size = len(C)
 				dCd_blocks.append(np.dot(d_shift[idx:idx+size, : ].T, C))
 				idx += size
@@ -38,24 +42,24 @@ def run_inversion(self):
 			norm_d.append(np.dot(dCd, d_shift)[0,0])
 		else:
 			norm_d.append(0)
-			for i in range(self.npts_slice*self.components):
+			for i in range(self.d.npts_slice*self.d.components):
 				norm_d[-1] += d_shift[i,0]*d_shift[i,0]
 	
 	if self.threads > 1: # parallel
 		pool = mp.Pool(processes=self.threads)
-		results = [pool.apply_async(invert, args=(grid[i]['id'], self.d_shifts, norm_d, self.Cd_inv, self.Cd_inv_shifts, self.nr, self.components, self.stations, self.npts_elemse, self.npts_slice, self.elemse_start_origin, self.deviatoric, self.decompose, self.invert_displacement)) for i in todo]
+		results = [pool.apply_async(invert, args=(grid[i]['id'], d_shifts, norm_d, Cd_inv, Cd_inv_shifts, self.inp.nr, self.d.components, self.inp.stations, self.d.npts_elemse, self.d.npts_slice, self.d.elemse_start_origin, self.deviatoric, self.decompose, self.d.invert_displacement)) for i in todo]
 		output = [p.get() for p in results]
 	else: # serial
 		output = []
 		for i in todo:
-			res = invert(grid[i]['id'], self.d_shifts, norm_d, self.Cd_inv, self.Cd_inv_shifts, self.nr, self.components, self.stations, self.npts_elemse, self.npts_slice, self.elemse_start_origin, self.deviatoric, self.decompose, self.invert_displacement)
+			res = invert(grid[i]['id'], d_shifts, norm_d, Cd_inv, Cd_inv_shifts, self.inp.nr, self.d.components, self.inp.stations, self.d.npts_elemse, self.d.npts_slice, self.d.elemse_start_origin, self.deviatoric, self.decompose, self.d.invert_displacement)
 			output.append(res)
 	min_misfit = output[0]['misfit']
 	for i in todo:
 		grid[i].update(output[todo.index(i)])
 		grid[i]['shift_idx'] = grid[i]['shift']
-		#grid[i]['shift'] = self.shift_min + grid[i]['shift']*self.SHIFT_step/self.max_samprate
-		grid[i]['shift'] = self.shifts[grid[i]['shift']]
+		#grid[i]['shift'] = self.g.shift_min + grid[i]['shift']*self.g.SHIFT_step/self.d.max_samprate
+		grid[i]['shift'] = self.d.shifts[grid[i]['shift']]
 		min_misfit = min(min_misfit, grid[i]['misfit'])
 	self.max_sum_c = self.max_c = self.sum_c = 0
 	for i in todo:

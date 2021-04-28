@@ -53,19 +53,19 @@ def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=F
 	:param sharey: if ``True`` the y-axes for all stations have the same limits, otherwise the limits are chosen automatically for every station
 	:type sharey: bool, optional
 	"""
-	if cholesky and not len(self.LT) and not len(self.LT3):
+	if cholesky and not len(self.cova.LT) and not len(self.cova.LT3):
 		raise ValueError('Covariance matrix not set. Run "covariance_matrix()" first.')
-	data = self.data_shifts[self.centroid['shift_idx']]
-	npts = self.npts_slice
-	samprate = self.samprate
-	elemse = read_elemse(self.nr, self.npts_elemse, 'green/elemse'+self.centroid['id']+'.dat', self.stations, self.invert_displacement) # nacist elemse
+	data = self.data.data_shifts[self.MT.centroid['shift_idx']]
+	npts = self.data.npts_slice
+	samprate = self.data.samprate
+	elemse = read_elemse(self.inp.nr, self.data.npts_elemse, 'green/elemse'+self.MT.centroid['id']+'.dat', self.inp.stations, self.data.invert_displacement) # nacist elemse
 	#if not no_filter:
-	for r in range(self.nr):
+	for r in range(self.inp.nr):
 		for e in range(6):
-			my_filter(elemse[r][e], self.stations[r]['fmin'], self.stations[r]['fmax'])
-			elemse[r][e].trim(UTCDateTime(0)+self.elemse_start_origin)
+			my_filter(elemse[r][e], self.inp.stations[r]['fmin'], self.inp.stations[r]['fmax'])
+			elemse[r][e].trim(UTCDateTime(0)+self.data.elemse_start_origin)
 
-	plot_stations, comps, f, ax, ea = self.plot_seismo_backend_1(plot_stations, plot_components, comp_order, sharey=(cholesky or sharey), title_prefix=('','pseudo ')[cholesky and self.LT3!=[]], ylabel=('velocity [m/s]', None)[cholesky])
+	plot_stations, comps, f, ax, ea = self.plot_seismo_backend_1(plot_stations, plot_components, comp_order, sharey=(cholesky or sharey), title_prefix=('','pseudo ')[cholesky and self.cova.LT3!=[]], ylabel=('velocity [m/s]', None)[cholesky])
 	
 	t = np.arange(0, (npts-0.5) / samprate, 1. / samprate)
 	if add_file:
@@ -78,13 +78,13 @@ def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=F
 		#if no_filter:
 			#SAMPRATE = self.data_unfiltered[sta][0].stats.sampling_rate
 			#NPTS = int(npts/samprate * SAMPRATE), 
-			#SHIFT = int(round(self.centroid['shift']*SAMPRATE))
+			#SHIFT = int(round(self.MT.centroid['shift']*SAMPRATE))
 			#T = np.arange(0, (NPTS-0.5) / SAMPRATE, 1. / SAMPRATE)
 		SYNT = {}
 		for comp in range(3):
 			SYNT[comp] = np.zeros(npts)
 			for e in range(6):
-				SYNT[comp] += elemse[sta][e][comp].data[0:npts] * self.centroid['a'][e,0]
+				SYNT[comp] += elemse[sta][e][comp].data[0:npts] * self.MT.centroid['a'][e,0]
 		comps_used = 0
 		for comp in comps:
 			synt = SYNT[comp]
@@ -95,34 +95,34 @@ def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=F
 						#D[i] = self.data_unfiltered[sta][comp].data[i+SHIFT]
 			#else:
 			d = data[sta][comp][0:len(t)]
-			if cholesky and self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
-				if self.LT3:
+			if cholesky and self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+				if self.cova.LT3:
 					#print(r, comp) # DEBUG
 					d    = np.zeros(npts)
 					synt = np.zeros(npts)
 					x1 = -npts
 					for COMP in range(3):
-						if not self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[COMP]]:
+						if not self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[COMP]]:
 							continue
 						x1 += npts; x2 = x1+npts
 						y1 = comps_used*npts; y2 = y1+npts
-						#print(self.LT3[sta][y1:y2, x1:x2].shape, data[sta][COMP].data[0:npts].shape) # DEBUG
-						d    += np.dot(self.LT3[sta][y1:y2, x1:x2], data[sta][COMP].data[0:npts])
-						synt += np.dot(self.LT3[sta][y1:y2, x1:x2], SYNT[COMP])
+						#print(self.cova.LT3[sta][y1:y2, x1:x2].shape, data[sta][COMP].data[0:npts].shape) # DEBUG
+						d    += np.dot(self.cova.LT3[sta][y1:y2, x1:x2], data[sta][COMP].data[0:npts])
+						synt += np.dot(self.cova.LT3[sta][y1:y2, x1:x2], SYNT[COMP])
 				else:
-					d    = np.dot(self.LT[sta][comp], d)
-					synt = np.dot(self.LT[sta][comp], synt)
+					d    = np.dot(self.cova.LT[sta][comp], d)
+					synt = np.dot(self.cova.LT[sta][comp], synt)
 				comps_used += 1
 			c = comps.index(comp)
 			#if no_filter:
 				#ax[r,c].plot(T,D, color='k', linewidth=obs_width)
-			if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]] or not cholesky: # do not plot seismogram if the component is not used and Cholesky decomposition is plotted
+			if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]] or not cholesky: # do not plot seismogram if the component is not used and Cholesky decomposition is plotted
 				l_d, = ax[r,c].plot(t,d, obs_style, linewidth=obs_width)
-				if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+				if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
 					d_max = max(max(d), -min(d), d_max)
 			else:
 				ax[r,c].plot([0],[0], 'w', linewidth=0)
-			if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+			if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
 				l_s, = ax[r,c].plot(t,synt, synt_style, linewidth=synt_width)
 				d_max = max(max(synt), -min(synt), d_max)
 			else:
@@ -154,25 +154,25 @@ def plot_covariance_function(self, outfile='$outdir/covariance.png', comp_order=
 	:param plot_components: list of components to plot; if ``None`` plots all components
 	:type plot_components: list or None, optional
 	"""
-	if not len(self.Cf):
+	if not len(self.cova.Cf):
 		raise ValueError('Covariance functions not calculated or not saved. Run "covariance_matrix(save_covariance_function=True)" first.')
-	data = self.data_shifts[self.centroid['shift_idx']]
+	data = self.data.data_shifts[self.MT.centroid['shift_idx']]
 	
 	plot_stations, comps, f, ax, ea = self.plot_seismo_backend_1(plot_stations, plot_components, comp_order, crosscomp=crosscovariance, yticks=False, ylabel=None)
 	
-	dt = 1. / self.samprate
-	t = np.arange(-np.floor(self.Cf_len/2) * dt, (np.floor(self.Cf_len/2)+0.5) * dt, dt)
+	dt = 1. / self.data.samprate
+	t = np.arange(-np.floor(self.cova.Cf_len/2) * dt, (np.floor(self.cova.Cf_len/2)+0.5) * dt, dt)
 	COMPS = (1,3)[crosscovariance]
 	for sta in plot_stations:
 		r = plot_stations.index(sta)
 		for comp in comps:
 			c = comps.index(comp)
 			for C in range(COMPS): # if crosscomp==False: C = 0
-				d = self.Cf[sta][(comp,C)[crosscovariance],comp]
+				d = self.cova.Cf[sta][(comp,C)[crosscovariance],comp]
 				#if len(t) != len(d): # DEBUG
 					#t = np.arange(-np.floor(len(d)/2) * dt, (np.floor(len(d)/2)+0.5) * dt, dt) # DEBUG
 					#print(len(d), len(t)) # DEBUG
-				if type(d)==np.ndarray and self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+				if type(d)==np.ndarray and self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
 					color = style
 					if len(t) != len(d):
 						t = np.arange(-np.floor(len(d)/2) * dt, (np.floor(len(d)/2)+0.5) * dt, dt)
@@ -200,35 +200,35 @@ def plot_noise(self, outfile='$outdir/noise.png', comp_order='ZNE', obs_style='k
 	:param plot_components: list of components to plot; if ``None`` plots all components
 	:type plot_components: list or None, optional
 	"""
-	samprate = self.samprate
+	samprate = self.data.samprate
 	
 	plot_stations, comps, f, ax, ea = self.plot_seismo_backend_1(plot_stations, plot_components, comp_order)
 	
-	t = np.arange(0, (self.npts_slice-0.5) / samprate, 1. / samprate)
+	t = np.arange(0, (self.data.npts_slice-0.5) / samprate, 1. / samprate)
 	d_max = 0
 	for sta in plot_stations:
 		r = plot_stations.index(sta)
 		for comp in comps:
-			d = self.data_shifts[self.centroid['shift_idx']][sta][comp][0:len(t)]
+			d = self.data.data_shifts[self.MT.centroid['shift_idx']][sta][comp][0:len(t)]
 			c = comps.index(comp)
-			if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+			if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
 				color = obs_style
 				d_max = max(max(d), -min(d), d_max)
 			else:
 				color = 'gray'
 			ax[r,c].plot(t, d, color, linewidth=obs_width)
-			if len(self.noise[sta]) > comp:
-				NPTS = len(self.noise[sta][comp].data)
+			if len(self.data.noise[sta]) > comp:
+				NPTS = len(self.data.noise[sta][comp].data)
 				T = np.arange(-NPTS * 1. / samprate, -0.5 / samprate, 1. / samprate)
-				ax[r,c].plot(T, self.noise[sta][comp], color, linewidth=obs_width)
-				if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
-					d_max = max(max(self.noise[sta][comp]), -min(self.noise[sta][comp]), d_max)
+				ax[r,c].plot(T, self.data.noise[sta][comp], color, linewidth=obs_width)
+				if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+					d_max = max(max(self.data.noise[sta][comp]), -min(self.data.noise[sta][comp]), d_max)
 	ax[-1,0].set_ylim([-d_max, d_max])
 	ymin, ymax = ax[r,c].get_yaxis().get_view_interval()
 	for r in range(len(plot_stations)):
 		for i in range(len(comps)):
 			l4 = ax[r,i].add_patch(mpatches.Rectangle((-NPTS/samprate, -ymax), NPTS/samprate, 2*ymax, color=(1.0, 0.6, 0.4))) # (x,y), width, height
-			l5 = ax[r,i].add_patch(mpatches.Rectangle((0, -ymax), self.npts_slice/samprate, 2*ymax, color=(0.7, 0.7, 0.7)))
+			l5 = ax[r,i].add_patch(mpatches.Rectangle((0, -ymax), self.data.npts_slice/samprate, 2*ymax, color=(0.7, 0.7, 0.7)))
 	ea.append(f.legend((l4, l5), ('$C_D$', 'inverted'), 'lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=2, fontsize='small', fancybox=True, handlelength=3, handleheight=1.2)) # , borderaxespad=0.1
 	ea.append(f.text(0.1, 1.06-0.004*len(plot_stations), 'x', color='white', ha='center', va='center'))
 	self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, extra_artists=ea)
@@ -246,11 +246,11 @@ def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_sta
 	:param plot_components: list of components to plot; if ``None`` plots all components
 	:type plot_components: list or None, optional
 	"""
-	if not len(self.LT) and not len(self.LT3):
+	if not len(self.cova.LT) and not len(self.cova.LT3):
 		raise ValueError('Covariance matrix not set. Run "covariance_matrix()" first.')
-	data = self.data_shifts[self.centroid['shift_idx']]
-	npts = self.npts_slice
-	samprate = self.samprate
+	data = self.data.data_shifts[self.MT.centroid['shift_idx']]
+	npts = self.data.npts_slice
+	samprate = self.data.samprate
 
 	plot_stations, comps, fig, ax, ea = self.plot_seismo_backend_1(plot_stations, plot_components, comp_order, yticks=False, xlabel='frequency [Hz]', ylabel='amplitude spectrum [m/s]')
 	
@@ -277,26 +277,26 @@ def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_sta
 			d = data[sta][comp][0:npts]
 			d_filt = d.copy()
 			c = comps.index(comp)
-			if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
-				if self.LT3:
+			if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+				if self.cova.LT3:
 					d_filt = np.zeros(npts)
 					x1 = -npts
 					for COMP in comps:
-						if not self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[COMP]]:
+						if not self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[COMP]]:
 							continue
 						x1 += npts; x2 = x1+npts
 						y1 = comps_used*npts; y2 = y1+npts
-						d_filt += np.dot(self.LT3[sta][y1:y2, x1:x2], data[sta][COMP].data[0:npts])
+						d_filt += np.dot(self.cova.LT3[sta][y1:y2, x1:x2], data[sta][COMP].data[0:npts])
 				else:
-					d_filt = np.dot(self.LT[sta][comp], d)
+					d_filt = np.dot(self.cova.LT[sta][comp], d)
 				comps_used += 1
-				fmin[r,c] = self.stations[sta]['fmin']
-				fmax[r,c] = self.stations[sta]['fmax']
+				fmin[r,c] = self.inp.stations[sta]['fmin']
+				fmax[r,c] = self.inp.stations[sta]['fmax']
 			ax[r,c].tick_params(axis='y', which='both', left=False, right=False, labelleft=False)
 			ax[r,c].yaxis.offsetText.set_visible(False) 
 			ax3[r,c].get_yaxis().set_visible(False)
-			if self.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
-				noise = self.noise[sta][comp]
+			if self.inp.stations[sta][{0:'useZ', 1:'useN', 2:'useE'}[comp]]:
+				noise = self.data.noise[sta][comp]
 				NPTS = len(noise)
 				NOISE  = np.sqrt(np.square(np.real(np.fft.fft(noise))*DT)*npts*dt / (NPTS*DT))
 				f2 = np.arange(0, samprate*1. * (1-0.5/NPTS), samprate*2 / NPTS)
@@ -312,7 +312,7 @@ def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_sta
 	ax3[-1,0].set_ylim([0, D_filt_max])
 	#print (D_filt_max, y3max, y3min)
 	align_yaxis(ax[0,0], ax3[0,0])
-	ax[0,0].set_xlim(0, self.fmax*1.5)
+	ax[0,0].set_xlim(0, self.data.fmax*1.5)
 	#ax[0,0].set_xscale('log')
 	#f.legend((l4, l5), ('$C_D$', 'inverted'), 'upper center', ncol=2, fontsize='small', fancybox=True)
 	ea.append(fig.legend((l_d, l_filt, l_noise), ('data', 'standardized data (by $C_D$)', 'noise'), loc='lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=3, numpoints=1, fontsize='small', fancybox=True, handlelength=3)) # , borderaxespad=0.1
@@ -329,12 +329,12 @@ def plot_seismo_backend_1(self, plot_stations, plot_components, comp_order, cros
 	"""
 	The first part of back-end for functions :func:`plot_seismo`, :func:`plot_covariance_function`, :func:`plot_noise`, :func:`plot_spectra`. There is no need for calling it directly.
 	"""
-	data = self.data_shifts[self.centroid['shift_idx']]
+	data = self.data.data_shifts[self.MT.centroid['shift_idx']]
 	
 	plt.rcParams.update({'font.size': 22})
 	
 	if not plot_stations:
-		plot_stations = range(self.nr)
+		plot_stations = range(self.inp.nr)
 	if plot_components:
 		comps = plot_components
 	elif comp_order == 'NEZ':
@@ -356,7 +356,7 @@ def plot_seismo_backend_1(self, plot_stations, plot_components, comp_order, cros
 
 	for sta in plot_stations:
 		r = plot_stations.index(sta)
-		ax[r,0].set_ylabel(data[sta][0].stats.station + u"\n{0:1.0f} km, {1:1.0f}°".format(self.stations[sta]['dist']/1000, self.stations[sta]['az']), fontsize=16)
+		ax[r,0].set_ylabel(data[sta][0].stats.station + u"\n{0:1.0f} km, {1:1.0f}°".format(self.inp.stations[sta]['dist']/1000, self.inp.stations[sta]['az']), fontsize=16)
 		#SYNT = {}
 		#comps_used = 0
 		for comp in comps:

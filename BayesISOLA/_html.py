@@ -47,9 +47,9 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	:type plot_maps_sum: string, optional
 	"""
 	out = open(outfile.replace('$outdir', self.outdir), 'w')
-	e = self.event
-	C = self.centroid
-	decomp = self.mt_decomp.copy()
+	e = self.inp.event
+	C = self.MT.centroid
+	decomp = self.MT.mt_decomp.copy()
 	out.write(textwrap.dedent("""\
 		<!DOCTYPE html>
 		<html lang="en" dir="ltr">
@@ -65,12 +65,12 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	if backlink:
 		out.write('<p><a href="../index.html">back to event list</a></p>\n')
 	out.write('<dl>  <dt>Method</dt>\n  <dd>Waveform inversion for <strong>' + 
-		{1:'deviatoric part of', 0:'full'}[self.deviatoric] + 
+		{1:'deviatoric part of', 0:'full'}[self.MT.deviatoric] + 
 		'</strong> moment tensor (' + 
-		{1:'5', 0:'6'}[self.deviatoric] + 
+		{1:'5', 0:'6'}[self.MT.deviatoric] + 
 		' components)<br />\n    ' + 
-		{1:'with the <strong>data covariance matrix</strong> based on real noise', 0:'without the covariance matrix'}[bool(self.Cd_inv)] + 
-		{1:'<br />\n    with <strong>crosscovariance</strong> between components', 0:''}[bool(self.LT3)] + 
+		{1:'with the <strong>data covariance matrix</strong> based on real noise', 0:'without the covariance matrix'}[bool(self.cova.Cd_inv)] + 
+		{1:'<br />\n    with <strong>crosscovariance</strong> between components', 0:''}[bool(self.cova.LT3)] + 
 		'.</dd>\n  <dt>Reference</dt>\n  <dd>Vackář, Gallovič, Burjánek, Zahradník, and Clinton. Bayesian ISOLA: new tool for automated centroid moment tensor inversion, <em>in preparation</em>, <a href="http://geo.mff.cuni.cz/~vackar/papers/isola-obspy.pdf">PDF</a></dd>\n</dl>\n\n')
 	out.write(textwrap.dedent('''\
 		<h2>Hypocenter location</h2>
@@ -130,7 +130,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 			</div>
 			</div>
 			'''.format(MT_full=s1+'MT'+s2, MT_DC=s1+'MT_DC'+s2)))
-	t = self.event['t'] + C['shift']
+	t = self.inp.event['t'] + C['shift']
 	out.write(textwrap.dedent('''\
 		<h3>Centroid location</h3>
 
@@ -175,12 +175,12 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 			dir_y = 	{1:'east', 0:'', -1:'west'}[int(np.sign(C['y']))],
 			shift = 	abs(C['shift']), 
 			sgn_shift={1:'after', 0:'after', -1:'before'}[int(np.sign(C['shift']))],
-			dd = 	abs(C['z']-self.event['depth'])/1e3,
-			sgn_dd = 	{1:'deeper', 0:'deeper', -1:'shallower'}[int(np.sign(C['z']-self.event['depth']))]
+			dd = 	abs(C['z']-self.inp.event['depth'])/1e3,
+			sgn_dd = 	{1:'deeper', 0:'deeper', -1:'shallower'}[int(np.sign(C['z']-self.inp.event['depth']))]
 		)))
 	if C['edge']:
 		out.write('<p class="warning">Warning: the solution lies on the edge of the grid!</p>')
-	if C['shift'] in (self.shifts[0], self.shifts[-1]):
+	if C['shift'] in (self.data.shifts[0], self.data.shifts[-1]):
 		out.write('<p class="warning">Warning: the solution lies on the edge of the time-grid!</p>')
 
 	mt2 = a2mt(C['a'], system='USE')
@@ -189,7 +189,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	MT2 = mt2 / c
 
 	out.write('\n\n<h3>Moment tensor and its quality</h3>\n\n')
-	if self.mt_decomp and reference:
+	if self.MT.mt_decomp and reference:
 		decomp.update(rename_keys(reference, 'ref_'))
 		out.write('''
 <table>
@@ -210,7 +210,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>DC component</th>	<td>{dc_perc:3.0f} %</td>	<td>{ref_dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD component</th>	<td>{clvd_perc:3.0f} %</td>	<td>{ref_clvd_perc:3.0f} %</td></tr>
 '''.format(c, *MT2, depth=C['z']/1e3, **decomp))
-		if not self.deviatoric:
+		if not self.MT.deviatoric:
 			out.write('''
   <tr><th>isotropic component</th>	<td>{iso_perc:3.0f} %</td>	<td>{ref_iso_perc:3.0f} %</td></tr>
 '''.format(**decomp))
@@ -222,7 +222,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>condition number</th>	<td>{CN:2.0f}</td>	<td></td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td>	<td></td></tr>
 '''.format(VR=C['VR']*100, CN=C['CN'], **decomp))
-	elif self.mt_decomp:
+	elif self.MT.mt_decomp:
 		out.write('''
 <table>
   <tr><th colspan="2" class="center">Centroid position</th></tr>
@@ -241,7 +241,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>DC</th>	<td>{dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD</th>	<td>{clvd_perc:3.0f} %</td></tr>
 '''.format(c, *MT2, depth=C['z']/1e3, **decomp))
-		if not self.deviatoric:
+		if not self.MT.deviatoric:
 			out.write('''
   <tr><th>ISO</th>	<td>{iso_perc:3.0f} %</td></tr>
 '''.format(**decomp))
@@ -269,8 +269,8 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>condition number</th>	<td>{CN:2.0f}</td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td></tr>
 '''.format(c, *MT2, depth=C['z']/1e3, VR=C['VR']*100, CN=C['CN']))
-	if self.max_VR:
-		out.write('  <tr><th>VR ({2:d} closest components)</th>	<td>{1:2.0f} %</td>{0:s}</tr>'.format(('', '<td></td>')[bool(reference)], self.max_VR[0]*100, self.max_VR[1]))
+	if self.MT.max_VR:
+		out.write('  <tr><th>VR ({2:d} closest components)</th>	<td>{1:2.0f} %</td>{0:s}</tr>'.format(('', '<td></td>')[bool(reference)], self.MT.max_VR[0]*100, self.MT.max_VR[1]))
 	if reference and 'kagan' in reference:
 		out.write('<tr><th>Kagan angle</th>	<td colspan="2" class="center">{0:3.1f}°</td></tr>\n'.format(reference['kagan']))
 	out.write('</table>\n\n')
@@ -297,7 +297,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   </div>
 </div>
 '''.format(DC=s1+'comp-1-DC'+s2, CLVD=s1+'comp-2-CLVD'+s2))
-		if not self.deviatoric:
+		if not self.MT.deviatoric:
 			out.write('''
 <div class="thumb tleft">
   <a href="{ISO:s}" data-lightbox="histogram" data-title="isotropic part uncertainty">
@@ -319,9 +319,9 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 </div>
 
 '''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW'+s2, NS=s1+'place-NS'+s2, time=s1+'time-shift'+s2))
-		if len(self.shifts) > 1 or len(self.grid) > 1:
+		if len(self.data.shifts) > 1 or len(self.grid.grid) > 1:
 			out.write('\n\n<h3>Histograms&mdash;uncertainty of centroid position and time</h3>\n\n')
-		if len (self.depths) > 1:
+		if len (self.grid.depths) > 1:
 			out.write('''
 <div class="thumb tleft">
   <a href="{depth:s}" data-lightbox="histogram" data-title="centroid depth uncertainty">
@@ -333,7 +333,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 </div>
 
 '''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW.png'+s2, NS=s1+'place-NS.png'+s2, time=s1+'time-shift'+s2))
-		if len(self.grid) > len(self.depths):
+		if len(self.grid.grid) > len(self.grid.depths):
 			out.write('''
 <div class="thumb tleft">
   <a href="{EW:s}" data-lightbox="histogram" data-title="centroid position east-west uncertainty">
@@ -354,7 +354,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 </div>
 
 '''.format(Mw=s1+'mech-0-Mw'+s2, depth=s1+'place-depth'+s2, EW=s1+'place-EW'+s2, NS=s1+'place-NS'+s2, time=s1+'time-shift'+s2))
-		if len(self.shifts) > 1:
+		if len(self.data.shifts) > 1:
 			out.write('''
 <div class="thumb tleft">
   <a href="{time:s}" data-lightbox="histogram" data-title="centroid time uncertainty">
@@ -507,7 +507,7 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	if plot_maps:
 		out.write('\n\n<h3>Stability in space (top view)</h3>\n\n<div class="thumb tleft">\n')
 		k = plot_maps.rfind(".")
-		for z in self.depths:
+		for z in self.grid.depths:
 			filename = plot_maps[:k] + "_{0:0>5.0f}".format(z) + plot_maps[k:]
 			out.write('  <a href="{0:s}" data-lightbox="map">\n    <img alt="" src="{0:s}" height="100" class="thumbimage" />\n  </a>\n'.format(filename))
 		out.write('  <div class="thumbcaption">\n    click to compare different depths\n  </div>\n</div>\n')
@@ -577,27 +577,27 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <dd>{samprate:5.1f} Hz</dd>
 </dl>
 '''.format(
-	points = len(self.grid), 
-	x = self.step_x, 
-	z = self.step_z, 
-	radius = self.radius/1e3, 
-	dmin = self.depth_min/1e3, 
-	dmax = self.depth_max/1e3,
-	rlen = self.rupture_length/1e3,
-	sn = self.shift_min, 
-	Sn = self.SHIFT_min, 
-	sx = self.shift_max, 
-	Sx = self.SHIFT_max, 
-	step = self.shift_step, 
-	STEP = self.SHIFT_step,
-	npts_elemse = self.npts_elemse, 
-	tl = self.tl, 
-	freq = self.freq, 
-	npts_slice = self.npts_slice,
+	points = len(self.grid.grid), 
+	x = self.grid.step_x, 
+	z = self.grid.step_z, 
+	radius = self.grid.radius/1e3, 
+	dmin = self.grid.depth_min/1e3, 
+	dmax = self.grid.depth_max/1e3,
+	rlen = self.inp.rupture_length/1e3,
+	sn = self.grid.shift_min, 
+	Sn = self.grid.SHIFT_min, 
+	sx = self.grid.shift_max, 
+	Sx = self.grid.SHIFT_max, 
+	step = self.grid.shift_step, 
+	STEP = self.grid.SHIFT_step,
+	npts_elemse = self.data.npts_elemse, 
+	tl = self.data.tl, 
+	freq = self.data.freq, 
+	npts_slice = self.data.npts_slice,
 	samplings = self.logtext['samplings'], 
-	decimate = self.max_samprate / self.samprate, 
-	samprate = self.samprate, 
-	SAMPRATE = self.max_samprate,
+	decimate = self.data.max_samprate / self.data.samprate, 
+	samprate = self.data.samprate, 
+	SAMPRATE = self.data.max_samprate,
 	crust = self.logtext['crust']
 ))
 

@@ -28,28 +28,28 @@ def plot_maps(self, outfile='$outdir/map.png', beachball_size_c=False):
 	Plot top view to the grid at each depth. The solutions in each grid point (for the centroid time with the highest VR) are shown by beachballs. The color of the beachball corresponds to its DC-part. The inverted centroid time is shown by a contour in the background and the condition number by contour lines.
 	"""
 	outfile = outfile.replace('$outdir', self.outdir)
-	r = self.radius * 1e-3 * 1.1 # to km, *1.1
+	r = self.grid.radius * 1e-3 * 1.1 # to km, *1.1
 	if beachball_size_c:
-		max_width = np.sqrt(self.max_sum_c)
-	for z in self.depths:
+		max_width = np.sqrt(self.MT.max_sum_c)
+	for z in self.grid.depths:
 		# prepare data points
 		x=[]; y=[]; s=[]; CN=[]; MT=[]; color=[]; width=[]; highlight=[]
-		for gp in self.grid:
+		for gp in self.grid.grid:
 			if gp['z'] != z or gp['err']:
 				continue
 			x.append(gp['y']/1e3); y.append(gp['x']/1e3); s.append(gp['shift']); CN.append(gp['CN']) # NS is x coordinate, so switch it with y to be vertical
 			MT.append(a2mt(gp['a'], system='USE'))
 			VR = max(gp['VR'],0)
 			if beachball_size_c:
-				width.append(self.step_x/1e3 * np.sqrt(gp['sum_c']) / max_width)
+				width.append(self.grid.step_x/1e3 * np.sqrt(gp['sum_c']) / max_width)
 			else:
-				width.append(self.step_x/1e3*VR)
-			if self.decompose:
+				width.append(self.grid.step_x/1e3*VR)
+			if self.MT.decompose:
 				dc = float(gp['dc_perc'])/100
 				color.append((dc, 0, 1-dc))
 			else:
 				color.append('black')
-			highlight.append(self.centroid['id'] == gp['id'])
+			highlight.append(self.MT.centroid['id'] == gp['id'])
 		if outfile:
 			k = outfile.rfind(".")
 			filename = outfile[:k] + "_{0:0>5.0f}".format(z) + outfile[k:]
@@ -75,15 +75,15 @@ def plot_slices(self, outfile='$outdir/slice.png', point=None, beachball_size_c=
 	if point:
 		x0, y0 = point
 	else:
-		x0 = self.centroid['x']; y0 = self.centroid['y']
-	depth_min = self.depth_min / 1000; depth_max = self.depth_max / 1000
+		x0 = self.MT.centroid['x']; y0 = self.MT.centroid['y']
+	depth_min = self.grid.depth_min / 1000; depth_max = self.grid.depth_max / 1000
 	depth = depth_max - depth_min
-	r = self.radius * 1e-3 * 1.1 # to km, *1.1
+	r = self.grid.radius * 1e-3 * 1.1 # to km, *1.1
 	if beachball_size_c:
-		max_width = np.sqrt(self.max_sum_c)
+		max_width = np.sqrt(self.MT.max_sum_c)
 	for slice in ('N-S', 'W-E', 'NW-SE', 'SW-NE'):
 		x=[]; y=[]; s=[]; CN=[]; MT=[]; color=[]; width=[]; highlight=[]
-		for gp in self.grid:
+		for gp in self.grid.grid:
 			if   slice == 'N-S': X = -gp['x'];	Z = gp['y']-y0
 			elif slice == 'W-E': X = gp['y'];	Z = gp['x']-x0
 			elif slice=='NW-SE': X = (gp['y']-gp['x'])*1/np.sqrt(2);	Z = gp['x']+gp['y']-y0-x0
@@ -95,15 +95,15 @@ def plot_slices(self, outfile='$outdir/slice.png', point=None, beachball_size_c=
 			MT.append(a2mt(gp['a'], system='USE'))
 			VR = max(gp['VR'],0)
 			if beachball_size_c:
-				width.append(self.step_x/1e3 * np.sqrt(gp['sum_c']) / max_width)
+				width.append(self.grid.step_x/1e3 * np.sqrt(gp['sum_c']) / max_width)
 			else:
-				width.append(self.step_x/1e3*VR)
-			if self.decompose:
+				width.append(self.grid.step_x/1e3*VR)
+			if self.MT.decompose:
 				dc = float(gp['dc_perc'])/100
 				color.append((dc, 0, 1-dc))
 			else:
 				color.append('black')
-			highlight.append(self.centroid['id'] == gp['id'])
+			highlight.append(self.MT.centroid['id'] == gp['id'])
 		if outfile:
 			k = outfile.rfind(".")
 			filename = outfile[:k] + '_' + slice + outfile[k:]
@@ -123,10 +123,10 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 	The legend and properties of the function are similar as at function :func:`plot_maps`.
 	"""
 	outfile = outfile.replace('$outdir', self.outdir)
-	if not self.Cd_inv:
+	if not self.cova.Cd_inv:
 		return False # if the data covariance matrix is unitary, we have no estimation of data errors, so the PDF has good sense
-	r = self.radius * 1e-3 * 1.1 # to km, *1.1
-	depth_min = self.depth_min * 1e-3; depth_max = self.depth_max * 1e-3
+	r = self.grid.radius * 1e-3 * 1.1 # to km, *1.1
+	depth_min = self.grid.depth_min * 1e-3; depth_max = self.grid.depth_max * 1e-3
 	depth = depth_max - depth_min
 	Ymin = depth_max + depth*0.05
 	Ymax = depth_min - depth*0.05
@@ -135,7 +135,7 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 		X=[]; Y=[]; s=[]; CN=[]; MT=[]; color=[]; width=[]; highlight=[]
 		g = {}
 		max_c = 0
-		for gp in self.grid:
+		for gp in self.grid.grid:
 			if gp['err'] or gp['sum_c']<=0:   continue
 			if   slice == 'N-S': x = -gp['x']
 			elif slice == 'W-E': x = gp['y']
@@ -155,9 +155,9 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 				g[x][y]['a'] = gp['a']
 				#g[x][y]['CN'] = gp['CN']
 				#g[x][y]['s'] = gp['shift']
-				if self.decompose:
+				if self.MT.decompose:
 					g[x][y]['dc'] = gp['dc_perc']
-			if self.centroid['id'] == gp['id']:
+			if self.MT.centroid['id'] == gp['id']:
 				g[x][y]['highlight'] = True
 		for x in g:
 			for y in g[x]:
@@ -166,13 +166,13 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 				#s.append(g[x][y]['s'])
 				#CN.append(g[x][y]['CN'])
 				MT.append(a2mt(g[x][y]['a'], system='USE'))
-				if self.decompose:
+				if self.MT.decompose:
 					dc = float(g[x][y]['dc'])*0.01
 					color.append((dc, 0, 1-dc))
 				else:
 					color.append('black')
 				highlight.append(g[x][y]['highlight'])
-				width.append(self.step_x*1e-3 * np.sqrt(g[x][y]['c'] / max_c))
+				width.append(self.grid.step_x*1e-3 * np.sqrt(g[x][y]['c'] / max_c))
 		if outfile:
 			k = outfile.rfind(".")
 			filename = outfile[:k] + '_' + slice + outfile[k:]
@@ -214,13 +214,13 @@ def plot_map_backend(self, x, y, s, CN, MT, color, width, highlight, xmin, xmax,
 
 	for i in range(len(x)):
 		if highlight[i]:
-			c = plt.Circle((x[i], y[i]), self.step_x/1e3*0.5, color='r')
+			c = plt.Circle((x[i], y[i]), self.grid.step_x/1e3*0.5, color='r')
 			c.set_edgecolor('r')
 			c.set_linewidth(10)
 			c.set_facecolor('none')  # "none" not None
 			c.set_alpha(0.7)
 			ax.add_artist(c)
-		if width[i] > self.step_x*1e-3 * 0.04:
+		if width[i] > self.grid.step_x*1e-3 * 0.04:
 			try:
 				b = beach(MT[i], xy=(x[i], y[i]), width=(width[i], width[i]*np.sign(ydiff)), linewidth=0.5, facecolor=color[i], zorder=10)
 			except:
@@ -233,7 +233,7 @@ def plot_map_backend(self, x, y, s, CN, MT, color, width, highlight, xmin, xmax,
 					ax.add_collection(b)
 			else:
 				ax.add_collection(b)
-		elif width[i] > self.step_x*1e-3 * 0.001:
+		elif width[i] > self.grid.step_x*1e-3 * 0.001:
 			b = plt.Circle((x[i], y[i]), width[i]/2, facecolor=color[i], edgecolor='k', zorder=10, linewidth=0.5)
 			ax.add_artist(b)
 
@@ -250,7 +250,7 @@ def plot_map_backend(self, x, y, s, CN, MT, color, width, highlight, xmin, xmax,
 		z2 = rbf(xi, yi)
 
 		shift = plt.imshow(z1, cmap = plt.get_cmap('PRGn'), 
-			vmin=self.shift_min, vmax=self.shift_max, origin='lower',
+			vmin=self.grid.shift_min, vmax=self.grid.shift_max, origin='lower',
 			extent=[Xmin, Xmax, Ymin, Ymax])
 		levels = np.arange(1., 21., 1.)
 		CN = plt.contour(z2, levels, cmap = plt.get_cmap('gray'), origin='lower', linewidths=1,
@@ -266,7 +266,7 @@ def plot_map_backend(self, x, y, s, CN, MT, color, width, highlight, xmin, xmax,
 		#CB2.ax.set_position([l+0.58*w, bb+0.07*h, ww, hh])
 	
 	# legend beachball's color = DC%
-	if self.decompose:
+	if self.MT.decompose:
 		x = y = xmin*2
 		plt.plot([x],[y], marker='o', markersize=15, color=(1, 0, 0), label='DC 100 %')
 		plt.plot([x],[y], marker='o', markersize=15, color=(.5, 0, .5), label='DC 50 %')
@@ -279,14 +279,14 @@ def plot_map_backend(self, x, y, s, CN, MT, color, width, highlight, xmin, xmax,
 	
 	# legend beachball's area
 	if beachball_size_c: # beachball's area = PDF
-		r_max = self.step_x/1e3/2
+		r_max = self.grid.step_x/1e3/2
 		r_half = r_max/1.4142
 		text_max = 'maximal PDF'
 		text_half = 'half-of-maximum PDF'
 		text_area = 'Beachball area ~ PDF'
 	else: # beachball's radius = VR
-		VRmax = self.centroid['VR']
-		r_max = self.step_x/1e3/2 * VRmax
+		VRmax = self.MT.centroid['VR']
+		r_max = self.grid.step_x/1e3/2 * VRmax
 		r_half = r_max/2
 		text_max = 'VR {0:2.0f} % (maximal)'.format(VRmax*100)
 		text_half = 'VR {0:2.0f} %'.format(VRmax*100/2)
@@ -321,11 +321,11 @@ def plot_3D(self, outfile='$outdir/animation.mp4'):
 	:param outfile: path to file for saving animation
 	:type outfile: string
 	"""
-	n = len(self.grid)
+	n = len(self.grid.grid)
 	x = np.zeros(n); y = np.zeros(n); z = np.zeros(n); VR = np.zeros(n)
 	c = np.zeros((n, 3))
-	for i in range(len(self.grid)):
-		gp = self.grid[i]
+	for i in range(len(self.grid.grid)):
+		gp = self.grid.grid[i]
 		if gp['err']:
 			continue
 		x[i] = gp['y']/1e3
@@ -334,7 +334,7 @@ def plot_3D(self, outfile='$outdir/animation.mp4'):
 		vr = max(gp['VR'],0)
 		VR[i] = np.pi * (15 * vr)**2
 		c[i] = np.array([vr, 0, 1-vr])
-		#if self.decompose:
+		#if self.MT.decompose:
 			#dc = float(gp['dc_perc'])/100
 			#c[i,:] = np.array([dc, 0, 1-dc])
 		#else:

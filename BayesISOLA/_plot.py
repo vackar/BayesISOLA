@@ -30,10 +30,10 @@ def plot_stations(self, outfile='$outdir/stations.png', network=True, location=F
 	plt.xlabel('west - east [km]')
 	plt.ylabel('south - north [km]')
 	plt.title('Stations used in the inversion')
-	plt.plot(self.centroid['y']/1e3, self.centroid['x']/1e3, marker='*', markersize=75, color='yellow', label='epicenter', linestyle='None')
+	plt.plot(self.MT.centroid['y']/1e3, self.MT.centroid['x']/1e3, marker='*', markersize=75, color='yellow', label='epicenter', linestyle='None')
 	
 	L1 = L2 = L3 = True
-	for sta in self.stations:
+	for sta in self.inp.stations:
 		az = radians(sta['az'])
 		dist = sta['dist']/1000 # from meter to kilometer
 		y = cos(az)*dist # N
@@ -84,16 +84,16 @@ def plot_covariance_matrix(self, outfile=None, normalize=False, cholesky=False, 
 	fig, ax = plt.subplots(1, 1)
 	if fontsize:
 		plt.rcParams.update({'font.size': fontsize})
-	Cd = np.zeros((self.components*self.npts_slice, self.components*self.npts_slice))
-	if not len(self.Cd):
+	Cd = np.zeros((self.data.components*self.data.npts_slice, self.data.components*self.data.npts_slice))
+	if not len(self.cova.Cd):
 		raise ValueError('Covariance matrix not set or not saved. Run "covariance_matrix(save_non_inverted=True)" first.')
 	i = 0
-	if cholesky and self.LT3:
-		matrix = self.LT3
+	if cholesky and self.cova.LT3:
+		matrix = self.cova.LT3
 	elif cholesky:
-		matrix = [item for sublist in self.LT for item in sublist]
+		matrix = [item for sublist in self.cova.LT for item in sublist]
 	else:
-		matrix = self.Cd
+		matrix = self.cova.Cd
 	for C in matrix:
 		if type(C)==int:
 			continue
@@ -109,9 +109,9 @@ def plot_covariance_matrix(self, outfile=None, normalize=False, cholesky=False, 
 	values = []
 	labels = []
 	i = 0
-	n = self.npts_slice
-	for stn in self.stations:
-		if cholesky and self.LT3:
+	n = self.data.npts_slice
+	for stn in self.inp.stations:
+		if cholesky and self.cova.LT3:
 			j = stn['useZ'] + stn['useN'] + stn['useE']
 			if j:
 				values.append(i*n + j*n/2)

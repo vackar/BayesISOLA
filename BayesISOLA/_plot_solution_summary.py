@@ -11,7 +11,7 @@ from BayesISOLA.histogram import histogram
 
 def plot_MT(self, outfile='$outdir/centroid.png', facecolor='red'):
 	"""
-	Plot the beachball of the best solution ``self.centroid``.
+	Plot the beachball of the best solution ``self.MT.centroid``.
 	
 	:param outfile: path to the file where to plot; if ``None``, plot to the screen
 	:type outfile: string, optional
@@ -27,13 +27,13 @@ def plot_MT(self, outfile='$outdir/centroid.png', facecolor='red'):
 	plt.xlim(-100-lw/2, 100+lw/2)
 	plt.ylim(-100-lw/2, 100+lw/2)
 
-	a = self.centroid['a']
+	a = self.MT.centroid['a']
 	mt2 = a2mt(a, system='USE')
 	#beachball(mt2, outfile=outfile)
 	full = beach(mt2, linewidth=lw, facecolor=facecolor, edgecolor='black', zorder=1)
 	ax.add_collection(full)
-	if self.decompose:
-		dc = beach((self.centroid['s1'], self.centroid['d1'], self.centroid['r1']), nofill=True, linewidth=lw/2, zorder=2)
+	if self.MT.decompose:
+		dc = beach((self.MT.centroid['s1'], self.MT.centroid['d1'], self.MT.centroid['r1']), nofill=True, linewidth=lw/2, zorder=2)
 		ax.add_collection(dc)
 	if outfile:
 		plt.savefig(outfile, bbox_inches='tight', pad_inches=0)
@@ -62,27 +62,27 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 	shift = []; depth = []; NS = []; EW = []
 	n_sum = 0
 	A = []
-	c = self.centroid
-	for gp in self.grid:
+	c = self.MT.centroid
+	for gp in self.grid.grid:
 		if gp['err']:
 			continue
 		for i in gp['shifts']:
 			GP = gp['shifts'][i]
-			n_GP = int(round(GP['c'] / self.sum_c * n))
+			n_GP = int(round(GP['c'] / self.MT.sum_c * n))
 			if n_GP == 0:
 				continue
 			n_sum += n_GP
 			a = GP['a']
-			if self.deviatoric:
+			if self.MT.deviatoric:
 				a = a[:5]
 			cov = gp['GtGinv']
 			A2 = np.random.multivariate_normal(a.T[0], cov, n_GP)
 			for a in A2:
 				a = a[np.newaxis].T
-				if self.deviatoric:
+				if self.MT.deviatoric:
 					a = np.append(a, [[0.]], axis=0)
 				A.append(a)
-			shift += [self.shifts[i]] * n_GP
+			shift += [self.data.shifts[i]] * n_GP
 			depth += [gp['z']/1e3] * n_GP
 			NS    += [gp['x']/1e3] * n_GP
 			EW    += [gp['y']/1e3] * n_GP
@@ -176,7 +176,7 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 			ax.add_collection(dc)
 		except:
 			print('plotting this moment strike / dip / rake failed: ', (strike[i], dip[i], rake[i]))
-	if best and self.decompose:
+	if best and self.MT.decompose:
 		dc = beach((c['s1'], c['d1'], c['r1']), nofill=True, linewidth=lw*3, edgecolor=(0.,1.,0.2))
 		ax.add_collection(dc)
 	if reference:
@@ -192,26 +192,26 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 	# Plot histograms
 	histogram(dc_perc,   s1+'comp-1-DC'+s2,     bins=(10,100), range=(0,100), xlabel='DC %', reference=ref['dc_perc'], reference2=(None, c['dc_perc'])[best], fontsize=fontsize)
 	histogram(clvd_perc, s1+'comp-2-CLVD'+s2,   bins=(20,200), range=(-100,100), xlabel='CLVD %', reference=ref['clvd_perc'], reference2=(None, c['clvd_perc'])[best], fontsize=fontsize)
-	if not self.deviatoric:
+	if not self.MT.deviatoric:
 		histogram(iso_perc,  s1+'comp-3-ISO'+s2,    bins=(20,200), range=(-100,100), xlabel='ISO %', reference=ref['iso_perc'], reference2=(None, c['iso_perc'])[best], fontsize=fontsize)
-	#histogram(moment,    s1+'mech-0-moment'+s2, bins=20, range=(self.mt_decomp['mom']*0.7,self.mt_decomp['mom']*1.4), xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
-	histogram(moment,    s1+'mech-0-moment'+s2, bins=20, range=(self.mt_decomp['mom']*0.7/2,self.mt_decomp['mom']*1.4*2), xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
-	#histogram(Mw,        s1+'mech-0-Mw'+s2,     bins=20, range=(self.mt_decomp['Mw']-0.1,self.mt_decomp['Mw']+0.1), xlabel='moment magnitude $M_W$', reference=ref['Mw'], fontsize=fontsize)
-	histogram(Mw,        s1+'mech-0-Mw'+s2,     bins=20, range=(self.mt_decomp['Mw']-0.1*3,self.mt_decomp['Mw']+0.1*3), xlabel='moment magnitude $M_W$', reference=ref['Mw'], reference2=(None, c['Mw'])[best], fontsize=fontsize)
+	#histogram(moment,    s1+'mech-0-moment'+s2, bins=20, range=(self.MT.mt_decomp['mom']*0.7,self.MT.mt_decomp['mom']*1.4), xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
+	histogram(moment,    s1+'mech-0-moment'+s2, bins=20, range=(self.MT.mt_decomp['mom']*0.7/2,self.MT.mt_decomp['mom']*1.4*2), xlabel='scalar seismic moment [Nm]', reference=ref['mom'], fontsize=fontsize)
+	#histogram(Mw,        s1+'mech-0-Mw'+s2,     bins=20, range=(self.MT.mt_decomp['Mw']-0.1,self.MT.mt_decomp['Mw']+0.1), xlabel='moment magnitude $M_W$', reference=ref['Mw'], fontsize=fontsize)
+	histogram(Mw,        s1+'mech-0-Mw'+s2,     bins=20, range=(self.MT.mt_decomp['Mw']-0.1*3,self.MT.mt_decomp['Mw']+0.1*3), xlabel='moment magnitude $M_W$', reference=ref['Mw'], reference2=(None, c['Mw'])[best], fontsize=fontsize)
 	histogram(strike,    s1+'mech-1-strike'+s2, bins=72, range=(0,360), xlabel=u'strike [°]', multiply=2, reference=((ref['s1'], ref['s2']), None)[reference==None], reference2=(None, (c['s1'], c['s2']))[best], fontsize=fontsize)
 	histogram(dip,       s1+'mech-2-dip'+s2,    bins=18, range=(0,90), xlabel=u'dip [°]', multiply=2, reference=((ref['d1'], ref['d2']), None)[reference==None], reference2=(None, (c['d1'], c['d2']))[best], fontsize=fontsize)
 	histogram(rake,      s1+'mech-3-rake'+s2,   bins=72, range=(-180,180), xlabel=u'rake [°]', multiply=2, reference=((ref['r1'], ref['r2']), None)[reference==None], reference2=(None, (c['r1'], c['r2']))[best], fontsize=fontsize)
-	if len(self.shifts) > 1:
-		shift_step = self.SHIFT_step / self.max_samprate
-		histogram(shift,     s1+'time-shift'+s2,    bins=len(self.shifts), range=(self.shifts[0]-shift_step/2., self.shifts[-1]+shift_step/2.), xlabel='time shift [s]', reference=[0., None][reference==None], reference2=(None, c['shift'])[best], fontsize=fontsize)
-	if len (self.depths) > 1:
-		min_depth = (self.depths[0]-self.step_z/2.)/1e3
-		max_depth = (self.depths[-1]+self.step_z/2.)/1e3
-		histogram(depth,     s1+'place-depth'+s2,   bins=len(self.depths), range=(min_depth, max_depth), xlabel='centroid depth [km]', reference=[self.event['depth']/1e3, None][reference==None], reference2=(None, c['z']/1e3)[best], fontsize=fontsize)
-	if len(self.grid) > len(self.depths):
-		x_lim = (self.steps_x[-1]+self.step_x/2.)/1e3
-		histogram(NS,        s1+'place-NS'+s2,      bins=len(self.steps_x), range=(-x_lim, x_lim), xlabel=u'← to south : centroid place [km] : to north →', reference=[0., None][reference==None], reference2=(None, c['x']/1e3)[best], fontsize=fontsize)
-		histogram(EW,        s1+'place-EW'+s2,      bins=len(self.steps_x), range=(-x_lim, x_lim), xlabel=u'← to west : centroid place [km] : to east →', reference=[0., None][reference==None], reference2=(None, c['y']/1e3)[best], fontsize=fontsize)
+	if len(self.data.shifts) > 1:
+		shift_step = self.grid.SHIFT_step / self.data.max_samprate
+		histogram(shift,     s1+'time-shift'+s2,    bins=len(self.data.shifts), range=(self.data.shifts[0]-shift_step/2., self.data.shifts[-1]+shift_step/2.), xlabel='time shift [s]', reference=[0., None][reference==None], reference2=(None, c['shift'])[best], fontsize=fontsize)
+	if len (self.grid.depths) > 1:
+		min_depth = (self.grid.depths[0]-self.grid.step_z/2.)/1e3
+		max_depth = (self.grid.depths[-1]+self.grid.step_z/2.)/1e3
+		histogram(depth,     s1+'place-depth'+s2,   bins=len(self.grid.depths), range=(min_depth, max_depth), xlabel='centroid depth [km]', reference=[self.inp.event['depth']/1e3, None][reference==None], reference2=(None, c['z']/1e3)[best], fontsize=fontsize)
+	if len(self.grid.grid) > len(self.grid.depths):
+		x_lim = (self.grid.steps_x[-1]+self.grid.step_x/2.)/1e3
+		histogram(NS,        s1+'place-NS'+s2,      bins=len(self.grid.steps_x), range=(-x_lim, x_lim), xlabel=u'← to south : centroid place [km] : to north →', reference=[0., None][reference==None], reference2=(None, c['x']/1e3)[best], fontsize=fontsize)
+		histogram(EW,        s1+'place-EW'+s2,      bins=len(self.grid.steps_x), range=(-x_lim, x_lim), xlabel=u'← to west : centroid place [km] : to east →', reference=[0., None][reference==None], reference2=(None, c['y']/1e3)[best], fontsize=fontsize)
 
 	self.log('\nUncertainty evaluation: plotted {0:d} mechanism of {1:d} requested.'.format(n_sum, n))
 	self.log('Standard deviation :: dc: {dc:4.2f}, clvd: {clvd:4.2f}, iso: {iso:4.2f}, Mw: {Mw:4.2f}, t: {t:4.2f}, x: {x:4.2f}, y: {y:4.2f}, z: {z:4.2f}'.format(**stdev))
@@ -221,10 +221,10 @@ def plot_MT_uncertainty_centroid(self, outfile='$outdir/MT_uncertainty_centroid.
 	"""
 	Similar as :func:`plot_uncertainty`, but only the best point of the space-time grid is taken into account, so the uncertainties should be Gaussian.
 	"""
-	a = self.centroid['a']
-	if self.deviatoric:
+	a = self.MT.centroid['a']
+	if self.MT.deviatoric:
 		a = a[:5]
-	cov = self.centroid['GtGinv']
+	cov = self.MT.centroid['GtGinv']
 	A = np.random.multivariate_normal(a.T[0], cov, n)
 
 	fig = plt.figure(figsize=(5,5))
@@ -238,7 +238,7 @@ def plot_MT_uncertainty_centroid(self, outfile='$outdir/MT_uncertainty_centroid.
 
 	for a in A:
 		a = a[np.newaxis].T
-		if self.deviatoric:
+		if self.MT.deviatoric:
 			a = np.append(a, [[0.]], axis=0)
 		mt2 = a2mt(a, system='USE')
 		#full = beach(mt2, linewidth=lw, nofill=True, edgecolor='black')

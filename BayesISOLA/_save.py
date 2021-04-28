@@ -18,16 +18,16 @@ def save_seismo(self, file_d, file_synt):
 	
 	Uses :func:`numpy.save`.
 	"""
-	data = self.data_shifts[self.centroid['shift_idx']]
-	npts = self.npts_slice
-	elemse = read_elemse(self.nr, self.npts_elemse, 'green/elemse'+self.centroid['id']+'.dat', self.stations, self.invert_displacement) # nacist elemse
-	for r in range(self.nr):
+	data = self.d.data_shifts[self.centroid['shift_idx']]
+	npts = self.d.npts_slice
+	elemse = read_elemse(self.inp.nr, self.d.npts_elemse, 'green/elemse'+self.centroid['id']+'.dat', self.inp.stations, self.d.invert_displacement) # nacist elemse
+	for r in range(self.inp.nr):
 		for e in range(6):
-			my_filter(elemse[r][e], self.stations[r]['fmin'], self.stations[r]['fmax'])
-			elemse[r][e].trim(UTCDateTime(0)+self.elemse_start_origin)
-	synt = np.zeros((npts, self.nr*3))
-	d = np.empty((npts, self.nr*3))
-	for r in range(self.nr):
+			my_filter(elemse[r][e], self.inp.stations[r]['fmin'], self.inp.stations[r]['fmax'])
+			elemse[r][e].trim(UTCDateTime(0)+self.d.elemse_start_origin)
+	synt = np.zeros((npts, self.inp.nr*3))
+	d = np.empty((npts, self.inp.nr*3))
+	for r in range(self.inp.nr):
 		for comp in range(3):
 			for e in range(6):
 				synt[:, 3*r+comp] += elemse[r][e][comp].data[0:npts] * self.centroid['a'][e,0]
