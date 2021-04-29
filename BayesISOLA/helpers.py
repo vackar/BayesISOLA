@@ -25,19 +25,6 @@ def next_power_of_2(n):
 	"""
 	return 2**(n-1).bit_length()
 
-#def lcm(a,b):
-	#"""
-	#Returns generelized least common multiple.
-	
-	#:param a,b: numbers to compute least common multiple of them 
-	#:type a,b: float, which is a multiple of 0.00033333
-	#:returns: the least multiple of ``a`` and ``b``
-	#"""
-	#return abs(a * b * 9e6) / fractions.gcd(a*3e3,b*3e3) / 3e3 if a and b else 0
-#def lcmm(*args):
-    #"""Return generalized least common multiple of args."""
-    #return reduce(lcm, args)
-
 def lcmm(b, *args):
 	"""
 	Returns generelized least common multiple.
@@ -83,8 +70,6 @@ def decimate(a, n=2):
 	A = np.fft.fft(a, NPTS)
 	idx = int(np.round(npts/n/2))
 	A[idx:NPTS-idx+1] = 0+0j
-	#for i in range(flim, NPTS-flim+1):
-		#TR[i] = 0+0j
 	a = np.fft.ifft(A)
 	if npts % (2*n) == 1 or n!=2: # keep odd length for decimation factor 2
 		return a[:npts:n].real
