@@ -15,8 +15,8 @@ class process_data:
     :param threads: number of threads for parallelization (default 2)
     :type invert_displacement: bool, optional
     :param invert_displacement: convert observed and modeled waveforms to displacement prior comparison (if ``True``), otherwise compare it in velocity (default ``False``)
-    :type use_precalculated_Green: bool, optional
-    :param use_precalculated_Green: use Green's functions calculated in the previous run (default ``False``)
+    :type use_precalculated_Green: bool or ``'auto'``, optional
+    :param use_precalculated_Green: use Green's functions calculated in the previous run (default ``False``), value ``'auto'`` for check whether precalculated Green's function exists and were calculated on the same grid
 
     .. rubric:: _`Variables`
 
