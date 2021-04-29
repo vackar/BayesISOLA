@@ -59,15 +59,12 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	# params: grid[i]['id'], self.d_shifts, self.Cd_inv, self.nr, self.components, self.stations, self.npts_elemse, self.npts_slice, self.elemse_start_origin, self.deviatoric, self.decompose
 	if deviatoric: ne=5
 	else: ne=6
-	elemse = read_elemse(nr, npts_elemse, 'green/elemse'+point_id+'.dat', stations, invert_displacement) # nacist elemse
-	#elemse[0][0].plot() # DEBUG
+	elemse = read_elemse(nr, npts_elemse, 'green/elemse'+point_id+'.dat', stations, invert_displacement)
 	
 	# filtrovat elemse
 	for r in range(nr):
 		for i in range(ne):
-			#elemse[r][i].filter('highpass', freq=0.01) # DEBUG - pri instrumentalni korekci to same
 			my_filter(elemse[r][i], stations[r]['fmin'], stations[r]['fmax'])
-	#elemse[0][0].plot() # DEBUG
 	
 	if npts_slice != npts_elemse:
 		dt = elemse[0][0][0].stats.delta
@@ -78,7 +75,6 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 		npts = npts_slice
 	else:
 		npts = npts_elemse
-	#elemse[0][0].plot() # DEBUG
 
 	# RESIT OBRACENOU ULOHU
 	# pro kazdy bod site a cas zdroje
@@ -113,10 +109,8 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 			# G^T C_D^{-1} is in ``GtCd`` saved block-by-block, in ``Gt`` in one ndarray
 			idx = 0
 			GtCd = []
-			#print('\nINVERT')
 			for C in Cd_inv:
 				size = len(C)
-				#print(G.shape, size, idx, G[idx:idx+size, : ].T.shape, C.shape) # DEBUG
 				GtCd.append(np.dot(G[idx:idx+size, : ].T, C))
 				idx += size
 			Gt = np.concatenate(GtCd, axis=1)
@@ -128,14 +122,12 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 			CN = np.sqrt(np.linalg.cond(GtG)) # condition number
 			GtGinv = np.linalg.inv(GtG)
 			det_Ca = np.linalg.det(GtGinv)
-			#print('det', det_Ca) # DEBUG
 
 		# Gtd
 		Gtd = np.dot(Gt,d_shift)
 
 		# result : coeficients of elementary seismograms
 		a = np.dot(GtGinv,Gtd)
-		#a[0] = 1.; a[1] = 2.; a[2] = 3.; a[3] = 4.; a[4] = 5.; a[5] = 6.
 		if deviatoric: a = np.append(a, [[0.]], axis=0)
 		
 		if Cd_inv:
@@ -176,7 +168,6 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	r['GtGinv'] = res[shift]['GtGinv']
 	r['det_Ca'] = res[shift]['det_Ca']
 	r['shifts'] = res
-	#r['res'] = res
 	if decomp:
 		r.update(decompose(a2mt(r['a']))) # add MT decomposition to dict `r`
 	return r
