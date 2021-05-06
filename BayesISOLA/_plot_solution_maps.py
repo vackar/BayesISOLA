@@ -27,9 +27,10 @@ def plot_maps(self, outfile='$outdir/map.png', beachball_size_c=False):
 	
 	Plot top view to the grid at each depth. The solutions in each grid point (for the centroid time with the highest VR) are shown by beachballs. The color of the beachball corresponds to its DC-part. The inverted centroid time is shown by a contour in the background and the condition number by contour lines.
 	"""
-	if len(isola.grid) == len(isola.depths): # just one point in the map, it has no sense to plot it
+	if len(self.grid.grid) == len(self.grid.depths): # just one point in the map, it has no sense to plot it
 		return False
 	outfile = outfile.replace('$outdir', self.outdir)
+	self.plots['maps'] = outfile
 	r = self.grid.radius * 1e-3 * 1.1 # to km, *1.1
 	if beachball_size_c:
 		max_width = np.sqrt(self.MT.max_sum_c)
@@ -73,9 +74,10 @@ def plot_slices(self, outfile='$outdir/slice.png', point=None, beachball_size_c=
 	
 	The legend is the same as at :func:`plot_maps`.
 	"""
-	if len(isola.depths) == 1: # just grid point(s) in a single depth, it has no sense to plot it
+	if len(self.grid.depths) == 1: # just grid point(s) in a single depth, it has no sense to plot it
 		return False
 	outfile = outfile.replace('$outdir', self.outdir)
+	self.plots['slices'] = outfile
 	if point:
 		x0, y0 = point
 	else:
@@ -126,9 +128,10 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 	
 	The legend and properties of the function are similar as at function :func:`plot_maps`.
 	"""
-	outfile = outfile.replace('$outdir', self.outdir)
 	if not self.cova.Cd_inv:
 		return False # if the data covariance matrix is unitary, we have no estimation of data errors, so the PDF has good sense
+	outfile = outfile.replace('$outdir', self.outdir)
+	self.plots['maps_sum'] = outfile
 	r = self.grid.radius * 1e-3 * 1.1 # to km, *1.1
 	depth_min = self.grid.depth_min * 1e-3; depth_max = self.grid.depth_max * 1e-3
 	depth = depth_max - depth_min
@@ -136,9 +139,9 @@ def plot_maps_sum(self, outfile='$outdir/map_sum.png'):
 	Ymax = depth_min - depth*0.05
 	#for slice in ('N-S', 'W-E', 'NW-SE', 'SW-NE', 'top'):
 	for slice in ('N-S', 'W-E', 'top'):
-		if slice == 'top' and len(isola.grid) == len(isola.depths): # just one point in the map, skip
+		if slice == 'top' and len(self.grid.grid) == len(self.grid.depths): # just one point in the map, skip
 			continue
-		elif len(isola.depths) == 1: # just grid point(s) in a single depth, skip plotting
+		elif len(self.grid.depths) == 1: # just grid point(s) in a single depth, skip plotting
 			continue
 		X=[]; Y=[]; s=[]; CN=[]; MT=[]; color=[]; width=[]; highlight=[]
 		g = {}

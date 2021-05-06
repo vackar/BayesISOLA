@@ -4,10 +4,22 @@
 import numpy as np
 import textwrap
 import re # RegExp
+import os.path
 
 from BayesISOLA.MT_comps import a2mt
 
-def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT=None, plot_uncertainty=None, plot_stations=None, plot_seismo_cova=None, plot_seismo_sharey=None, mouse_figures=None, plot_spectra=None, plot_noise=None, plot_covariance_function=None, plot_covariance_matrix=None, plot_maps=None, plot_slices=None, plot_maps_sum=None):
+def imgpath(img, img2, html):
+	"""
+	Helper function for :func:`html_log`.
+	"""
+	if img and img != 'auto':
+		return img
+	if img2:
+		d = os.path.dirname(html)
+		return os.path.relpath(img2, d)
+	return None
+
+def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT='auto', plot_uncertainty='auto', plot_stations='auto', plot_seismo_cova='auto', plot_seismo_sharey='auto', mouse_figures=None, plot_spectra='auto', plot_noise='auto', plot_covariance_function='auto', plot_covariance_matrix='auto', plot_maps='auto', plot_slices='auto', plot_maps_sum='auto'):
 	"""
 	Generates an HTML page containing informations about the calculation and the result together with figures
 	
@@ -46,6 +58,20 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	:param plot_maps_sum: path to figures of solutions across the grid plotted by :func:`plot_maps_sum` (the common part of filename)
 	:type plot_maps_sum: string, optional
 	"""
+	plots = self.plots
+	plot_MT = imgpath(plot_MT, plots['MT'], outfile)
+	plot_uncertainty = imgpath(plot_uncertainty, plots['uncertainty'], outfile)
+	plot_stations = imgpath(plot_stations, plots['stations'], outfile)
+	plot_seismo_cova = imgpath(plot_seismo_cova, plots['seismo_cova'], outfile)
+	plot_seismo_sharey = imgpath(plot_seismo_sharey, plots['seismo_sharey'], outfile)
+	plot_spectra = imgpath(plot_spectra, plots['spectra'], outfile)
+	plot_noise = imgpath(plot_noise, plots['noise'], outfile)
+	plot_covariance_function = imgpath(plot_covariance_function, plots['covariance_function'], outfile)
+	plot_covariance_matrix = imgpath(plot_covariance_matrix, plots['covariance_matrix'], outfile)
+	plot_maps = imgpath(plot_maps, plots['maps'], outfile)
+	plot_slices = imgpath(plot_slices, plots['slices'], outfile)
+	plot_maps_sum = imgpath(plot_maps_sum, plots['maps_sum'], outfile)
+	
 	out = open(outfile.replace('$outdir', self.outdir), 'w')
 	e = self.inp.event
 	C = self.MT.centroid

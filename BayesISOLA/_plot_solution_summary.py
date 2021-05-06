@@ -18,6 +18,7 @@ def plot_MT(self, outfile='$outdir/centroid.png', facecolor='red'):
 	:param facecolor: color of the colored quadrants/parts of the beachball
 	"""
 	outfile = outfile.replace('$outdir', self.outdir)
+	self.plots['MT'] = outfile
 	fig = plt.figure(figsize=(5,5))
 	ax = plt.axes()
 	plt.axis('off')
@@ -153,6 +154,7 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 	else:
 		ref = {'dc_perc':None, 'clvd_perc':None, 'iso_perc':None, 'mom':None, 'Mw':None, 's1':0, 's2':0, 'd1':0, 'd2':0, 'r1':0, 'r2':0}
 	outfile = outfile.replace('$outdir', self.outdir)
+	self.plots['uncertainty'] = outfile
 	k = outfile.rfind(".")
 	s1 = outfile[:k]+'_'; s2 = outfile[k:]
 	if outfile:

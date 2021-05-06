@@ -17,7 +17,7 @@ def read_elemse(nr, npts, filename, stations, invert_displacement=False):
 	:type npts: integer
 	:param filename: path to the file
 	:type filename: string, optional
-	:param stations: ``isola.stations`` metadata of inverted stations
+	:param stations: ``BayesISOLA.stations`` metadata of inverted stations
 	:type stations: list of dictionaries
 	:param invert_displacement: TODO
 	:type invert_displacement: TODO

@@ -59,13 +59,15 @@ def plot_stations(self, outfile='$outdir/stations.png', network=True, location=F
 		#plt.legend(numpoints=1)
 	plt.legend(bbox_to_anchor=(0., -0.15-fontsize*0.002, 1., .07), loc='lower left', ncol=4, numpoints=1, mode='expand', fontsize='small', fancybox=True)
 	if outfile:
-		plt.savefig(outfile.replace('$outdir', self.outdir), bbox_inches='tight')
+		outfile = outfile.replace('$outdir', self.outdir)
+		plt.savefig(outfile, bbox_inches='tight')
+		self.plots['stations'] = outfile
 	else:
 		plt.show()
 	plt.clf()
 	plt.close()
 
-def plot_covariance_matrix(self, outfile=None, normalize=False, cholesky=False, fontsize=60, colorbar=False):
+def plot_covariance_matrix(self, outfile='$outdir/covariance_matrix.png', normalize=False, cholesky=False, fontsize=60, colorbar=False):
 	"""
 	Plots figure of the data covariance matrix :math:`C_D`.
 	
@@ -154,7 +156,9 @@ def plot_covariance_matrix(self, outfile=None, normalize=False, cholesky=False, 
 		t.tick2On = False
 	
 	if outfile:
-		plt.savefig(outfile.replace('$outdir', self.outdir), bbox_inches='tight')
+		outfile = outfile.replace('$outdir', self.outdir)
+		plt.savefig(outfile, bbox_inches='tight')
+		self.plots['covariance_matrix'] = outfile
 	else:
 		plt.show()
 	plt.clf()

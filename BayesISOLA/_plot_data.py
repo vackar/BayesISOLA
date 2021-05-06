@@ -135,7 +135,14 @@ def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=F
 	ax[-1,0].set_ylim([-d_max, d_max])
 	ea.append(f.legend((l_d, l_s), ('inverted data', 'modeled (synt)'), loc='lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=2, numpoints=1, fontsize='small', fancybox=True, handlelength=3)) # , borderaxespad=0.1
 	ea.append(f.text(0.1, 1.06-0.004*len(plot_stations), 'x', color='white', ha='center', va='center'))
-	self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, extra_artists=ea)
+	outfile = outfile.replace('$outdir', self.outdir)
+	self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, extra_artists=ea)
+	if cholesky:
+		self.plots['seismo_cova'] = outfile
+	elif sharey:
+		self.plots['seismo_sharey'] = outfile
+	else:
+		self.plots['seismo'] = outfile
 
 def plot_covariance_function(self, outfile='$outdir/covariance.png', comp_order='ZNE', crosscovariance=False, style='k', width=2, plot_stations=None, plot_components=None):
 	"""
@@ -183,7 +190,9 @@ def plot_covariance_function(self, outfile='$outdir/covariance.png', comp_order=
 			ax[3*r,  0].set_ylabel(' \n Z ')
 			ax[3*r+1,0].set_ylabel(data[sta][0].stats.station + '\n N ')
 			ax[3*r+2,0].set_ylabel(' \n E ')
-	self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, yticks=False, extra_artists=ea)
+	outfile = outfile.replace('$outdir', self.outdir)
+	self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, yticks=False, extra_artists=ea)
+	self.plots['covariance_function'] = outfile
 
 def plot_noise(self, outfile='$outdir/noise.png', comp_order='ZNE', obs_style='k', obs_width=2, plot_stations=None, plot_components=None):
 	"""
@@ -231,7 +240,9 @@ def plot_noise(self, outfile='$outdir/noise.png', comp_order='ZNE', obs_style='k
 			l5 = ax[r,i].add_patch(mpatches.Rectangle((0, -ymax), self.data.npts_slice/samprate, 2*ymax, color=(0.7, 0.7, 0.7)))
 	ea.append(f.legend((l4, l5), ('$C_D$', 'inverted'), 'lower center', bbox_to_anchor=(0.5, 1.-0.0066*len(plot_stations)), ncol=2, fontsize='small', fancybox=True, handlelength=3, handleheight=1.2)) # , borderaxespad=0.1
 	ea.append(f.text(0.1, 1.06-0.004*len(plot_stations), 'x', color='white', ha='center', va='center'))
-	self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, extra_artists=ea)
+	outfile = outfile.replace('$outdir', self.outdir)
+	self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, extra_artists=ea)
+	self.plots['noise'] = outfile
 	
 def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_stations=None, plot_components=None):
 	"""
@@ -323,7 +334,9 @@ def plot_spectra(self, outfile='$outdir/spectra.png', comp_order='ZNE', plot_sta
 			if fmax[r,c]:
 				ax[r,c].add_artist(Line2D((fmin[r,c], fmin[r,c]), (0, ymax), color='g', linewidth=1))
 				ax[r,c].add_artist(Line2D((fmax[r,c], fmax[r,c]), (0, ymax), color='g', linewidth=1))
-	self.plot_seismo_backend_2(outfile.replace('$outdir', self.outdir), plot_stations, comps, ax, yticks=False, extra_artists=ea)
+	outfile = outfile.replace('$outdir', self.outdir)
+	self.plot_seismo_backend_2(outfile, plot_stations, comps, ax, yticks=False, extra_artists=ea)
+	self.plots['spectra'] = outfile
 
 def plot_seismo_backend_1(self, plot_stations, plot_components, comp_order, crosscomp=False, sharey=True, yticks=True, title_prefix='', xlabel='time [s]', ylabel='velocity [m/s]'):
 	"""
