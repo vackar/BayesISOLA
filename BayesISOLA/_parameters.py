@@ -11,9 +11,9 @@ def set_frequencies(self, fmax, fmin=0., wavelengths=5):
 	Sets frequency range for each station according its distance.
 	
 	:type fmax: float
-	:param fmax: minimal inverted frequency for all stations
-	:type fmax: float, optional
 	:param fmax: maximal inverted frequency for all stations
+	:type fmin: float, optional
+	:param fmin: minimal inverted frequency for all stations
 	:type wavelengths: float, optional
 	:param wavelengths: maximal number of wavelengths between the source and the station; if exceeded, automatically decreases ``fmax``
 	
@@ -161,7 +161,7 @@ def set_parameters(self, fmax, fmin=0., wavelengths=5, min_depth=1000, log=True)
 	"""
 	self.set_frequencies(fmax, fmin, wavelengths)
 	self.set_working_sampling()
-	self.grid.set_grid() # must be after set_working_sampling
+	self.grid.set_grid(min_depth=min_depth) # must be after set_working_sampling
 	self.grid.set_time_grid(self.fmax, self.max_samprate)
 	self.set_time_window()
 	self.set_Greens_parameters()

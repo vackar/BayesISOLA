@@ -17,6 +17,23 @@ class process_data:
     :param invert_displacement: convert observed and modeled waveforms to displacement prior comparison (if ``True``), otherwise compare it in velocity (default ``False``)
     :type use_precalculated_Green: bool or ``'auto'``, optional
     :param use_precalculated_Green: use Green's functions calculated in the previous run (default ``False``), value ``'auto'`` for check whether precalculated Green's function exists and were calculated on the same grid
+    :param correct_data: if ``True``, run :func:`correct_data`
+    :type correct_data: bool, optional
+    :param set_parameters: if ``True``, run :func:`set_parameters`; in this case setting parameters `fmax` and `fmin` is strongly recommended
+	:param fmax: maximal inverted frequency for all stations
+	:type fmax: float, optional
+	:param fmin: minimal inverted frequency for all stations
+	:type fmax: float, optional
+	:parameter min_depth: minimal grid point depth in meters
+	:type min_depth: float, optional
+    :param skip_short_records: if not ``False``, run :func:`skip_short_records` with the value of the parameter
+    :type skip_short_records: bool or int, optional
+    :param calculate_or_verify_Green: if ``True``, run :func:`calculate_or_verify_Green`
+    :type calculate_or_verify_Green: bool, optional
+    :param trim_filter_data: if ``True``, run :func:`trim_filter_data`
+    :type trim_filter_data: bool, optional
+    :param decimate_shift: if ``True``, run :func:`decimate_shift`
+    :type decimate_shift: bool, optional
 
     .. rubric:: _`Variables`
 
@@ -64,7 +81,7 @@ class process_data:
 	from BayesISOLA._parameters import set_frequencies, set_working_sampling, count_components, min_time, max_time, set_time_window, set_parameters, skip_short_records
 	from BayesISOLA._process_data import correct_data, trim_filter_data, prefilter_data, decimate_shift
 
-	def __init__(self, data, grid, s_velocity=3000, threads=2, invert_displacement=False, use_precalculated_Green=False):
+	def __init__(self, data, grid, s_velocity=3000, threads=2, invert_displacement=False, use_precalculated_Green=False, correct_data=True, set_parameters=True, fmax=1., fmin=0., min_depth=1000., skip_short_records=False, calculate_or_verify_Green=True, trim_filter_data=True, decimate_shift=True):
 		self.d = data
 		self.grid = grid
 		self.s_velocity = s_velocity
@@ -78,6 +95,19 @@ class process_data:
 		self.logtext = data.logtext
 		self.idx_use = {0:'useZ', 1:'useN', 2:'useE'}
 		self.idx_weight = {0:'weightZ', 1:'weightN', 2:'weightE'}
+		
+		if correct_data:
+			self.correct_data()
+		if set_parameters:
+			self.set_parameters(fmax, fmin, min_depth)
+		if not skip_short_records is False:
+			self.skip_short_records(noise=True)
+		if calculate_or_verify_Green:
+			self.calculate_or_verify_Green()
+		if trim_filter_data:
+			self.trim_filter_data()
+		if decimate_shift:
+			self.decimate_shift()
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.__del__()
