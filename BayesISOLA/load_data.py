@@ -39,10 +39,12 @@ class load_data:
         Crust models used for calculating synthetic seismograms
     ``rupture_length`` : float
         Estimated length of the rupture in meters
+    ``stf_description`` : string
+        Text description of source time function
 	"""
 
 	from BayesISOLA._input_crust import read_crust
-	from BayesISOLA._input_event import read_event_info, set_event_info
+	from BayesISOLA._input_event import read_event_info, set_event_info, set_source_time_function
 	from BayesISOLA._input_network import read_network_info_DB, read_network_coordinates, create_station_index, write_stations
 	from BayesISOLA._input_seismo_files import add_NEZ, add_SAC, add_NIED, load_files, load_NIED_files, check_a_station_present
 	from BayesISOLA._input_seismo_remote import load_streams_ArcLink, load_streams_fdsnws

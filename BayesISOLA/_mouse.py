@@ -53,6 +53,8 @@ def detect_mouse(self, mouse_len = 2.5*60, mouse_onset = 1*60, fit_t1=-20, fit_t
 					self.stations_index['_'.join([stats.network, sta, stats.location, stats.channel[0:2]])]['use'+stats.channel[2]] = False
 					detected=True
 				if figures:
+					if figures is True:
+						figures = os.path.join(self.outdir, 'mouse')
 					if not os.path.exists(figures) and figures_mkdir:
 						os.mkdir(figures)
 					m1.plot(st[comp], outfile=os.path.join(figures, 'mouse_'+('no','YES')[detected]+'_'+sta+str(comp)+'.png'), xmin=t_start_origin-60, xmax=t_start_origin+240, ylabel='raw displacement [counts]', title="{{net:s}}:{{sta:s}} {{ch:s}}, fit: {fit:4.2f}".format(fit=fit))

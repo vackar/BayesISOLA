@@ -589,6 +589,8 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <dd>{freq:4d}</dd>
   <dt>npts for inversion</dt>
   <dd>{npts_slice:4d}</dd>
+  <dt>source time function</dt>
+  <dd>{stf_description:s}</dd>
 </dl>
 
 <h3>Sampling frequencies</h3>
@@ -624,7 +626,8 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	decimate = self.data.max_samprate / self.data.samprate, 
 	samprate = self.data.samprate, 
 	SAMPRATE = self.data.max_samprate,
-	crust = self.logtext['crust']
+	crust = self.logtext['crust'],
+	stf_description = self.inp.stf_description
 ))
 
 

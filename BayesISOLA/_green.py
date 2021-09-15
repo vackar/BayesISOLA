@@ -4,6 +4,7 @@
 import multiprocessing as mp
 import numpy as np
 import os.path
+import hashlib
 
 from BayesISOLA.axitra import Axitra_wrapper
 
@@ -21,7 +22,7 @@ def set_Greens_parameters(self):
 	#self.freq = min(int(math.ceil(self.fmax*self.tl))*2, self.npts_elemse/2) # pocitame 2x vic frekvenci, nez pak proleze filtrem, je to pak lepe srovnatelne se signalem, ktery je kauzalne filtrovany
 	self.freq = int(self.npts_elemse/2)+1
 	self.xl = max(np.ceil(self.d.stations[self.d.nr-1]['dist']/1000), 100)*1e3*20 # `xl` 20x vetsi nez nejvetsi epicentralni vzdalenost, zaokrouhlena nahoru na kilometry, minimalne 2000 km
-	self.log("\nGreen's function calculation:\n  npts: {0:4d}\n  tl: {1:4.2f}\n  freq: {2:4d}\n  npts for inversion: {3:4d}".format(self.npts_elemse, self.tl, self.freq, self.npts_slice))
+	self.log("\nGreen's function calculation:\n  npts: {0:4d}\n  tl: {1:4.2f}\n  freq: {2:4d}\n  npts for inversion: {3:4d}\n  source time function: {4:s}".format(self.npts_elemse, self.tl, self.freq, self.npts_slice, self.d.stf_description))
 
 def write_Greens_parameters(self):
 	"""
@@ -61,6 +62,9 @@ def verify_Greens_headers(self):
 	Checked whether elementary-seismogram-metadata files (created when the Green's functions were calculated) agree with curent grid points positions.
 	Used to verify whether pre-calculated Green's functions were calculated on the same grid as used now.
 	"""
+	md5_crustal = hashlib.md5(open('green/crustal.dat', 'rb').read()).hexdigest()
+	md5_station = hashlib.md5(open('green/station.dat', 'rb').read()).hexdigest()
+	txt_soutype = open('green/soutype.dat').read().strip().replace('\n', '_')
 	for g in range(len(self.grid.grid)):
 		gp = self.grid.grid[g]
 		point_id = str(g).zfill(4)
@@ -75,10 +79,19 @@ def verify_Greens_headers(self):
 			if len(lines)==0:
 				self.grid.grid[g]['err'] = 1
 				self.grid.grid[g]['VR'] = -10
-			elif lines[0] != '{0:1.3f} {1:1.3f} {2:1.3f}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3):
+			elif lines[0] != '{0:1.3f} {1:1.3f} {2:1.3f} {3:s} {4:s} {5:s}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3, md5_crustal, md5_station, txt_soutype):
 				problem = True
 		if problem:
-			desc = 'Pre-calculated grid point {0:d} has different coordinates, probably the shape of the grid has changed, calculate Green\'s functions again. Exiting...'.format(g)
+			l = lines[0].split()
+			desc = 'Pre-calculated grid point {0:d} was calculated with different parameters. '.format(g)
+			if l[0:3] != '{0:1.3f} {1:1.3f} {2:1.3f}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3).split():
+				desc += 'Its coordinates differs, probably the shape of the grid was changed. '
+			if l[3] != md5_crustal:
+				desc += 'File green/crustal.dat has different hash, probably crustal model was changed. '
+			if l[4] != md5_station:
+				desc += 'File green/station.dat has different hash, probably station set was different. '
+			if l[5] != txt_soutype:
+				desc += 'Source time function (file soutype.txt) was different. '
 			self.log(desc)
 			print(desc)
 			return False
@@ -105,7 +118,7 @@ def calculate_or_verify_Green(self):
 				self.write_Greens_parameters()
 				self.calculate_Green()
 			else:
-				raise ValueError('Headers of pre-calculated Green\'s functions differs from actual calculation, probably the grid shape has been changed.')
+				raise ValueError('Metadata of pre-calculated Green\'s functions differs from actual calculation. More details are shown above and in the log file.')
 
 def calculate_Green(self):
 	"""

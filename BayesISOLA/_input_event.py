@@ -76,3 +76,30 @@ def set_event_info(self, lat, lon, depth, mag, t, agency=''):
 	self.log('\nHypocenter location:\n  Agency: {agency:s}\n  Origin time: {t:s}\n  Lat {lat:8.3f}   Lon {lon:8.3f}   Depth{d:4.1f} km'.format(t=t.strftime('%Y-%m-%d %H:%M:%S'), lat=float(lat), lon=float(lon), d=float(depth), agency=agency))
 	self.rupture_length = math.sqrt(111 * 10**self.event['mag'])		# M6 ~ 111 km2, M5 ~ 11 km2 		REFERENCE NEEDED
 
+def set_source_time_function(self, type, t0=0, t1=0):
+	"""
+	Sets the source time function for calculating elementary seismograms.
+	
+	This function writes file ``green/soutype.dat``, which is read by ``green/elemse`` (function ``fsource()`` at the end of ``elemse.for``).
+	"""
+	icc = 1 # parameter-1 is used as number of derivatives in complex domain (1 = no derivative, 2 = a derivative etc.)
+	if type in ("step", "Heaviside", "step in displacement"):
+		ics = 7
+		icc = 2
+		description = "step in displacement"
+	elif type in ("triangle", "triangular", "triangle in velocity"): # t0 needed
+		ics = 4
+		description = "triangle in velocity, length = {0:3.1f} s".format(t0)
+	elif type in ("Bouchon", "Bouchon's smooth step"):
+		ics = 2
+		icc = 2
+		description = "Bouchon's smooth step, length = {0:3.1f} s".format(t0)
+	elif type in ("Brune", ): # t0 needed
+		ics = 9
+		description = "Brune, length = {0:3.1f} s".format(t0)
+	# TODO source complex spectrum is given as array and written to a file (uncomment reading file 301 in elemse.for)
+	self.stf_description = description
+	f = open('green/soutype.dat', 'w')
+	f.write("{0:d}\n{1:3.1f}\n{2:3.1f}\n{3:d}\n".format(ics, t0, t1, icc))
+	f.close()
+	
