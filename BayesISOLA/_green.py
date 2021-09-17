@@ -49,7 +49,7 @@ def verify_Greens_parameters(self):
 	else:
 		readable = True
 	if not readable or grdat.read() != "&input\nnc=99\nnfreq={freq:d}\ntl={tl:1.2f}\naw=0.5\nnr={nr:d}\nns=1\nxl={xl:1.1f}\nikmax=100000\nuconv=0.1E-06\nfref=1.\n/end\n".format(freq=self.freq,tl=self.tl,nr=self.d.nr, xl=self.xl):
-		desc = 'Pre-calculated Green\'s functions calculated with different parameters (e.g. sampling) than used now, calculate Green\'s functions again. Exiting...'
+		desc = 'Pre-calculated Green\'s functions calculated with different parameters (e.g. sampling) than used now, calculate Green\'s functions again.'
 		self.log(desc)
 		print(desc)
 		print ("Expected content of green/grdat.hed:\n&input\nnc=99\nnfreq={freq:d}\ntl={tl:1.2f}\naw=0.5\nnr={nr:d}\nns=1\nxl={xl:1.1f}\nikmax=100000\nuconv=0.1E-06\nfref=1.\n/end\n".format(freq=self.freq,tl=self.tl,nr=self.d.nr, xl=self.xl))
@@ -65,6 +65,8 @@ def verify_Greens_headers(self):
 	md5_crustal = hashlib.md5(open('green/crustal.dat', 'rb').read()).hexdigest()
 	md5_station = hashlib.md5(open('green/station.dat', 'rb').read()).hexdigest()
 	txt_soutype = open('green/soutype.dat').read().strip().replace('\n', '_')
+	problem = False
+	desc = ''
 	for g in range(len(self.grid.grid)):
 		gp = self.grid.grid[g]
 		point_id = str(g).zfill(4)
@@ -74,24 +76,25 @@ def verify_Greens_headers(self):
 			meta.close()
 		except:
 			problem = True
+			desc = 'Meta-data file for grid point {0:d} was not found. '.format(g)
 		else:
-			problem = False
 			if len(lines)==0:
 				self.grid.grid[g]['err'] = 1
 				self.grid.grid[g]['VR'] = -10
 			elif lines[0] != '{0:1.3f} {1:1.3f} {2:1.3f} {3:s} {4:s} {5:s}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3, md5_crustal, md5_station, txt_soutype):
 				problem = True
 		if problem:
-			l = lines[0].split()
-			desc = 'Pre-calculated grid point {0:d} was calculated with different parameters. '.format(g)
-			if l[0:3] != '{0:1.3f} {1:1.3f} {2:1.3f}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3).split():
-				desc += 'Its coordinates differs, probably the shape of the grid was changed. '
-			if l[3] != md5_crustal:
-				desc += 'File green/crustal.dat has different hash, probably crustal model was changed. '
-			if l[4] != md5_station:
-				desc += 'File green/station.dat has different hash, probably station set was different. '
-			if l[5] != txt_soutype:
-				desc += 'Source time function (file soutype.txt) was different. '
+			if not desc:
+				l = lines[0].split()
+				desc = 'Pre-calculated grid point {0:d} was calculated with different parameters. '.format(g)
+				if l[0:3] != '{0:1.3f} {1:1.3f} {2:1.3f}'.format(gp['x']/1e3, gp['y']/1e3, gp['z']/1e3).split():
+					desc += 'Its coordinates differs, probably the shape of the grid was changed. '
+				if l[3] != md5_crustal:
+					desc += 'File green/crustal.dat has different hash, probably crustal model was changed. '
+				if l[4] != md5_station:
+					desc += 'File green/station.dat has different hash, probably station set was different. '
+				if l[5] != txt_soutype:
+					desc += 'Source time function (file soutype.txt) was different. '
 			self.log(desc)
 			print(desc)
 			return False
