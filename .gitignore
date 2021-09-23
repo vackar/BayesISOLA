@@ -3,7 +3,6 @@ docs/_build
 docs/_static
 docs/_templates
 examples/
-input/
 invert/
 output/
 green/grdat.hed

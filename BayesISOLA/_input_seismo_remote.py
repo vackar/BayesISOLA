@@ -3,7 +3,7 @@
 
 import os.path
 import urllib.request as urllib
-from obspy import read, Stream
+from obspy import read, Stream, read_inventory
 #from obspy.clients.arclink import Client # The ArcLink protocol is deprecated
 
 from BayesISOLA.fileformats import attach_xml_paz
@@ -52,6 +52,7 @@ def load_streams_fdsnws(self, hosts, t_before=90, t_after=360, save_to=None):
 					attach_xml_paz(st)
 			except:
 				print(sta['network'], sta['code'], host, 'exception')
+				#print(url_data) # DEBUG
 			else:
 				if st:
 					print(sta['network'], sta['code'], host, 'ok')

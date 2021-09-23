@@ -9,7 +9,7 @@ BayesISOLA documentation
 BayesISOLA is an open-source module for Python for solution of seismic source inverse problem. It uses the point source approximation and describes the source in terms of centroid moment tensor.
 
 | **Copyright:**	`Jiří Vackář <http://geo.mff.cuni.cz/~vackar/>`_
-| **Version:**	developer's snapshot 2016-09-13
+| **Version:**	developer's snapshot 2021-09-17
 | **License:**	GNU Lesser General Public License, Version 3 (http://www.gnu.org/copyleft/lesser.html)
 
 Contents:
@@ -37,28 +37,24 @@ The code is still under development. We would be very happy for your feedback.
 Requirements
 ------------
 
+Anaconda `package list <_static/package-list.txt>` of all necessary Python packages
+
 * `NumPy <http://www.numpy.org>`_: Fundamental package for scientific computing with Python.
 * `matplotlib <http://matplotlib.org>`_: Python 2D plotting library which produces publication quality figures in a variety of hardcopy formats and interactive.
 * `ObsPy <https://github.com/obspy/obspy/wiki>`_: Python framework for processing seismological data.
 * `SciPy <http://www.scipy.org>`_: Python-based ecosystem of open-source software for mathematics, science, and engineering.
 * `pyproj <https://github.com/jswhit/pyproj>`_: Python interface to PROJ4 library for cartographic transformations
-* `psycopg2 <http://initd.org/psycopg/>`_:  PostgreSQL adapter for the Python programming language.
 * `other modules:` math, subprocess, shutil, multiprocessing, re, fractions, warnings, os
-* `own module (part of the package):` `MouseTrap <http://geo.mff.cuni.cz/~vackar/mouse/>`_
-
 
 Download
 --------
 
-* `class_isola.py <_static/class_isola.py>`_ ISOLA-Obspy module file
-* `MouseTrap.py   <_static/MouseTrap.py>`_   MouseTrap module for detection of some disturbances
-
+* `BayesISOLA on GitHub <https://github.com/vackar/BayesISOLA>`
 
 Installation
 ------------
 
-* Download the example bellow
-* Unzip to a folder
+* Download the code from GitHub
 * Compile files `green/gr_xyz.for` and `green/elemse.for` with a Fortran compiler (tested with `ifort`), the binaries should be at `green/gr_xyz` and `green/elemse`, respectively.
 * Try to run `src/invert_SAC.py` (Example 1) or `src/invert_SAC_cova.py` (Example 2)
 
@@ -66,15 +62,17 @@ Installation
 Examples
 --------
 
-Example 1: SAC files
-  Find a centroid moment tensor for a Corinth Gulf (Greece) Apr 25, 2012 earthquake (`Sokos and Zahradník, SRL, 2013 <http://geo.mff.cuni.cz/~jz/papers/sokos&zahradnik_srl2013.pdf>`_). Network configuration is described in file `network.stn`, event information are in `event.isl`, crustal model in `crustal.dat`, and waveforms are in form of SAC files.
-  
-  Download: `Example 1 directory (zip) <_static/example_1.zip>`_ and `desired output of example 1 (zip) <_static/example_1_output.zip>`_ 
 
-Example 2: SAC files with covariance matrix
-  Find a centroid moment tensor for Sargans (St. Gallen, Switzerland) Dec 12, 2013 earthquake. Network configuration is described in file `network.stn`, event information are in `event.isl`, crustal model in `crustal.dat`, and waveforms are in form of SAC files.
-  
-  Download: `Example 2 directory (zip) <_static/example_2.zip>`_ and `desired output of example 2 (zip) <_static/example_2_output.zip>`_ 
+
+.. Example 1: SAC files
+..   Find a centroid moment tensor for a Corinth Gulf (Greece) Apr 25, 2012 earthquake (`Sokos and Zahradník, SRL, 2013 <http://geo.mff.cuni.cz/~jz/papers/sokos&zahradnik_srl2013.pdf>`_). Network configuration is described in file `network.stn`, event information are in `event.isl`, crustal model in `crustal.dat`, and waveforms are in form of SAC files.
+..   
+..   Download: `Example 1 directory (zip) <_static/example_1.zip>`_ and `desired output of example 1 (zip) <_static/example_1_output.zip>`_ 
+.. 
+.. Example 2: SAC files with covariance matrix
+..   Find a centroid moment tensor for Sargans (St. Gallen, Switzerland) Dec 12, 2013 earthquake. Network configuration is described in file `network.stn`, event information are in `event.isl`, crustal model in `crustal.dat`, and waveforms are in form of SAC files.
+..   
+..   Download: `Example 2 directory (zip) <_static/example_2.zip>`_ and `desired output of example 2 (zip) <_static/example_2_output.zip>`_ 
 
 
 Function summary

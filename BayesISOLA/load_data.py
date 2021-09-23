@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os.path
+
 import warnings
 warnings.filterwarnings("ignore",category=DeprecationWarning)
 warnings.filterwarnings('ignore', '.*Conversion of the second argument of issubdtype from.*')
@@ -16,6 +18,8 @@ class load_data:
     :param logfile: path to the logfile (default '$outdir/log.txt')
     :type outdir: string, optional
     :param outdir: a directory, where the outputs are saved (default 'output')
+    :type output_mkdir: bool, optional
+    :param output_mkdir: if ``True`` (default), creates a dir for output in case it does not exists
 	
     .. rubric:: _`Variables`
     
@@ -51,8 +55,10 @@ class load_data:
 	from BayesISOLA._mouse import detect_mouse
 	#from BayesISOLA._input_parameters import set_frequencies, set_working_sampling
 
-	def __init__(self, outdir='output', logfile='$outdir/log.txt'):
+	def __init__(self, outdir='output', logfile='$outdir/log.txt', output_mkdir=True):
 		self.outdir = outdir
+		if not os.path.exists(outdir) and output_mkdir:
+			os.mkdir(outdir)
 		self.logfile = open(logfile.replace('$outdir', self.outdir), 'w', 1)
 		self.data_raw = []
 		self.data_deltas = [] # list of ``stats.delta`` values of traces in ``self.data`` or ``self.data_raw``

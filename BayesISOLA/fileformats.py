@@ -77,8 +77,9 @@ def attach_xml_paz(st, paz_file=None):
 	:param paz_file: path to XML response file (if ``None``, just copy values from ``tr.stats.response`` to ``tr.stats.paz``)
 	:type paz_file: string, optional
 	"""
-	inv = read_inventory(paz_file)
-	st.attach_response(inv)
+	if paz_file:
+		inv = read_inventory(paz_file)
+		st.attach_response(inv)
 	for tr in st:
 		tr.stats.paz = tr.stats.response.get_paz()
 		tr.stats.paz.gain = tr.stats.paz.normalization_factor # VERIFY
