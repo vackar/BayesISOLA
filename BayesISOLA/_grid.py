@@ -63,6 +63,7 @@ def set_time_grid(self, fmax, max_samprate):
 	:type fmax: float
 	:parameter max_samprate: Maximal sampling rate of the source data, which can be reached by integer decimation from all input samplings.
 	:type max_samprate: float
+	
 	Sets equidistant time grid defined by ``self.shift_min``, ``self.shift_max``, and ``self.shift_step`` (in seconds). The corresponding values ``self.SHIFT_min``, ``self.SHIFT_max``, and ``self.SHIFT_step`` are (rounded) in samples related to the the highest sampling rate common to all stations.
 	"""
 	if self.grid_max_time:
