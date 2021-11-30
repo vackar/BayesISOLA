@@ -90,7 +90,7 @@ def count_components(self, log=True):
 		self.logtext['components'] = out
 		self.log(out, newline=False)
 
-def min_time(self, distance, mag=0, v=8000):
+def min_time(self, distance, mag=0):
 	"""
 	Defines the beginning of inversion time window in seconds from location origin time. Save it into ``self.t_min`` (now save 0 -- FIXED OPTION)
 	
@@ -106,9 +106,10 @@ def min_time(self, distance, mag=0, v=8000):
 	##if t<5:
 		##t = 0
 	#self.t_min = t
+	v = self.velocity_ot_the_fastest_wave
 	self.t_min = 0		# FIXED OPTION, because Green's functions with beginning in non-zero time are nou implemented yet
 
-def max_time(self, distance, mag=0, v=1000):
+def max_time(self, distance, mag=0):
 	"""
 	Defines the end of inversion time window in seconds from location origin time. Calculates it as :math:`\mathrm{distance} / v`.
 	Save it into ``self.t_max``.
@@ -119,6 +120,7 @@ def max_time(self, distance, mag=0, v=1000):
 	:param v: the last inverted wave-group characteristic velocity in m/s
 	:type v: float
 	"""
+	v = self.velocity_ot_the_slowest_wave
 	t = distance/v		# FIXED OPTION
 	self.t_max = t
 
