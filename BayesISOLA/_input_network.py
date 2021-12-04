@@ -128,7 +128,7 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 			self.models[model] = 0
 		net = network; loc = location; ch = channelcode # default values given by function parameters
 		if ":" in sta:
-			l = sta..replace(':', '.').split('.')
+			l = sta.replace(':', '.').split('.')
 			net = l[0]; sta = l[1]
 			if len(l) > 2: loc = l[2]
 			if len(l) > 3: ch = l[3]

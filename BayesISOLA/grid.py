@@ -56,7 +56,7 @@ class grid:
 
 	from BayesISOLA._grid import set_grid, set_time_grid
 
-	def __init__(self, data, location_unc=0, depth_unc=0, time_unc=0, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, circle_shape=True, rupture_velocity=1000):
+	def __init__(self, data, location_unc=0, depth_unc=0, time_unc=0, step_x=500, step_z=500, max_points=100, grid_radius=0, grid_min_depth=0, grid_max_depth=0, grid_min_time=0, grid_max_time=0, circle_shape=True, add_rupture_length=True, rupture_velocity=1000):
 		self.location_unc = location_unc # m
 		self.depth_unc = depth_unc # m
 		self.time_unc = time_unc # s
@@ -70,6 +70,7 @@ class grid:
 		self.grid_max_time =  grid_max_time # s
 		self.circle_shape = circle_shape
 		self.rupture_velocity = rupture_velocity
+		self.add_rupture_length = add_rupture_length
 		self.data = data
 
 
