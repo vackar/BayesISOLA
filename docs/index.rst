@@ -15,8 +15,9 @@ BayesISOLA is an open-source module for Python for solution of seismic source in
 Contents:
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
 
+   index
    BayesISOLA.load_data
    BayesISOLA.grid
    BayesISOLA.process_data

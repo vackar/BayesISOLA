@@ -27,16 +27,12 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	:type nr: integer
 	:param comps: number of components used in inversion
 	:type comps: integer
-	:param stations: TODO popsat
-	:type stations: TODO popsat
+	:param stations: ``BayesISOLA.stations`` metadata of inverted stations
+	:type stations: list of dictionaries
 	:param npts_elemse: number of points of elementary seismograms
 	:type npts_elemse: integer
 	:param npts_slice: number of points of seismograms used in inversion (npts_slice <= npts_elemse)
 	:type npts_slice: integer
-	:param fmin: lower frequency for filtering elementary seismogram
-	:type fmin: float
-	:param fmax: higher frequency for filtering elementary seismogram
-	:type fmax: float
 	:param elemse_start_origin: time between elementary seismogram start and elementary seismogram origin time
 	:type elemse_start_origin: float
 	:param origin_time: Event origin time in UTC
@@ -45,7 +41,7 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	:type deviatoric: bool, optional
 	:param decomp: if ``True``, decomposes found moment tensor in each grid point
 	:type decomp: bool, optional
-	:param invert_displacement: TODO popsat
+	:param invert_displacement: calculate L-2 difference between observed and modeled waveforms in displacement (if ``True``), otherwise compare it in velocity (default ``False``)
 	:type invert_displacement: bool, optional
 	:param elemse_path: path to elementary seismogram file
 	:type elemse_path: string, optional
