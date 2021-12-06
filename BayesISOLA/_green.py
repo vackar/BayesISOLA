@@ -145,3 +145,6 @@ def calculate_Green(self):
 				gp = grid[i]
 				Axitra_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin, logfile)
 
+def use_elemse_from_files(self, path):
+	for gp in self.grid.grid:
+		gp['path'] = os.path.join(path, gp['z_id'], gp['x_id']+gp['y_id'])

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.lines import Line2D
 
-from BayesISOLA.fileformats import read_elemse
+from BayesISOLA.fileformats import read_elemse, read_elemse_from_files
 from BayesISOLA.helpers import my_filter
 
 
@@ -58,7 +58,10 @@ def plot_seismo(self, outfile='$outdir/seismo.png', comp_order='ZNE', cholesky=F
 	data = self.data.data_shifts[self.MT.centroid['shift_idx']]
 	npts = self.data.npts_slice
 	samprate = self.data.samprate
-	elemse = read_elemse(self.inp.nr, self.data.npts_elemse, 'green/elemse'+self.MT.centroid['id']+'.dat', self.inp.stations, self.data.invert_displacement) # nacist elemse
+	if self.MT.centroid['path']:
+		elemse = read_elemse_from_files(self.inp.nr, self.MT.centroid['path'], self.inp.stations, self.inp.event['t'], self.data.invert_displacement)
+	else:
+		elemse = read_elemse(self.inp.nr, self.data.npts_elemse, 'green/elemse'+self.MT.centroid['id']+'.dat', self.inp.stations, self.data.invert_displacement)
 	#if not no_filter:
 	for r in range(self.inp.nr):
 		for e in range(6):

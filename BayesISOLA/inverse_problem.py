@@ -5,11 +5,11 @@ import numpy as np
 
 from obspy import UTCDateTime
 
-from BayesISOLA.fileformats import read_elemse
+from BayesISOLA.fileformats import read_elemse, read_elemse_from_files
 from BayesISOLA.helpers import my_filter
 from BayesISOLA.MT_comps import decompose, a2mt
 
-def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, stations, npts_elemse, npts_slice, elemse_start_origin, deviatoric=False, decomp=True, invert_displacement=False):
+def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, stations, npts_elemse, npts_slice, elemse_start_origin, origin_time, deviatoric=False, decomp=True, invert_displacement=False, elemse_path=None):
 	"""
 	Solves inverse problem in a single grid point for multiple time shifts.
 	
@@ -39,12 +39,16 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	:type fmax: float
 	:param elemse_start_origin: time between elementary seismogram start and elementary seismogram origin time
 	:type elemse_start_origin: float
+	:param origin_time: Event origin time in UTC
+	:type origin_time: :class:`~obspy.core.utcdatetime.UTCDateTime`
 	:param deviatoric: if ``True``, invert only deviatoric part of moment tensor (5 components), otherwise full moment tensor (6 components)
 	:type deviatoric: bool, optional
 	:param decomp: if ``True``, decomposes found moment tensor in each grid point
 	:type decomp: bool, optional
 	:param invert_displacement: TODO popsat
 	:type invert_displacement: bool, optional
+	:param elemse_path: path to elementary seismogram file
+	:type elemse_path: string, optional
 	:returns: Dictionary {'shift': order of `d_shift` item, 'a': coeficients of the elementary seismograms, 'VR': variance reduction, 'CN' condition number, and moment tensor decomposition (keys described at function :func:`decompose`)}
 	
 	It reads elementary seismograms for specified grid point, filter them and creates matrix :math:`G`.
@@ -59,7 +63,10 @@ def invert(point_id, d_shifts, norm_d, Cd_inv, Cd_inv_shifts, nr, comps, station
 	# params: grid[i]['id'], self.d_shifts, self.Cd_inv, self.nr, self.components, self.stations, self.npts_elemse, self.npts_slice, self.elemse_start_origin, self.deviatoric, self.decompose
 	if deviatoric: ne=5
 	else: ne=6
-	elemse = read_elemse(nr, npts_elemse, 'green/elemse'+point_id+'.dat', stations, invert_displacement)
+	if elemse_path:
+		elemse = read_elemse_from_files(nr, elemse_path, stations, origin_time, invert_displacement)
+	else:
+		elemse = read_elemse(nr, npts_elemse, 'green/elemse'+point_id+'.dat', stations, invert_displacement)
 	
 	# filtrovat elemse
 	for r in range(nr):
