@@ -58,6 +58,8 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	:param plot_maps_sum: path to figures of solutions across the grid plotted by :func:`plot_maps_sum` (the common part of filename)
 	:type plot_maps_sum: string, optional
 	"""
+	outfile = outfile.replace('$outdir', self.outdir)
+	out = open(outfile, 'w')
 	plots = self.plots
 	plot_MT = imgpath(plot_MT, plots['MT'], outfile)
 	plot_uncertainty = imgpath(plot_uncertainty, plots['uncertainty'], outfile)
@@ -72,7 +74,6 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	plot_slices = imgpath(plot_slices, plots['slices'], outfile)
 	plot_maps_sum = imgpath(plot_maps_sum, plots['maps_sum'], outfile)
 	
-	out = open(outfile.replace('$outdir', self.outdir), 'w')
 	e = self.inp.event
 	C = self.MT.centroid
 	decomp = self.MT.mt_decomp.copy()
@@ -82,11 +83,11 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 		<head>
 		<meta charset="UTF-8">
 		<title>{0:s}</title>
-		<link rel="stylesheet" href="../html/style.css" />
-		<link rel="stylesheet" href="../html/css/lightbox.min.css">
+		<link rel="stylesheet" href="{1:s}" />
+		<link rel="stylesheet" href="{2:s}" />
 		</head>
 		<body>
-		""".format(h1)))
+		""".format(h1, imgpath('', "html/style.css", outfile), imgpath('', 'html/css/lightbox.min.css', outfile))))
 	out.write('<h1>'+h1+'</h1>\n')
 	if backlink:
 		out.write('<p><a href="../index.html">back to event list</a></p>\n')
