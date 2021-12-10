@@ -197,7 +197,7 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 	
 		It should work also with any other file formats (supported by ObsPy), where are the components stored in separate files
 	"""
-	self.logtext['data'] = s = '\nLoading data from files.\n\tdata dir: {0:s}\n\tp&z dir:  {1:s}'.format(dir, [pz_dir,xml_dir][bool(xml_dir)])
+	self.logtext['data'] = s = '\nLoading data from files.\n\tdata dir: {0:s}\n\tp&z dir:  {1:s}'.format(dir, str([pz_dir,xml_dir][bool(xml_dir)]))
 	self.log('\n'+s)
 	loaded = len(self.data_raw)
 	#for i in range(self.nr):
@@ -254,7 +254,7 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 				self.log('\tExpected file location: ' + os.path.join(xml_dir, names[0]), printcopy=True)
 				continue
 			i += 1 # station not removed
-		else:
+		elif pz_dir:
 			# load poles and zeros - ISOLA format
 			for tr in self.data_raw[-1]:
 				comp = tr.stats.channel[2]
@@ -275,6 +275,8 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 					break
 			else:
 				i += 1 # station not removed
+		else:
+			i += 1 # pz_dir = None and xml_dir = None
 	self.check_a_station_present()
 	self.write_stations()
 
