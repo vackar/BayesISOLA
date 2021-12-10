@@ -5,9 +5,12 @@ import numpy as np
 
 from BayesISOLA.MT_comps import a2mt, decompose, decompose_mopad
 
-def print_solution(self):
+def print_solution(self, precision=2):
 	"""
 	Write into log the best solution ``self.centroid``.
+	
+	:param precision: number of decimal digits of moment tensor components (default ``2``)
+	:type precision: int, optional
 	"""
 	C = self.centroid
 	t = self.event['t'] + C['shift']
@@ -27,7 +30,8 @@ def print_solution(self):
 		self.log('  Warning: the solution lies on the edge of the time-grid!')
 	self.log('  VR: {0:4.0f} %\n  CN: {1:4.0f}'.format(C['VR']*100, C['CN']))
 	#self.log('  VR: {0:8.4f} %\n  CN: {1:4.0f}'.format(C['VR']*100, C['CN'])) # DEBUG
-	self.log('  MT [ Mrr    Mtt    Mpp    Mrt    Mrp    Mtp ]:\n     [{1:5.2f}  {2:5.2f}  {3:5.2f}  {4:5.2f}  {5:5.2f}  {6:5.2f}] * {0:5.0e}'.format(c, *MT2))
+	self.log('  MT [ {1:{0}}  {2:{0}}  {3:{0}}  {4:{0}}  {5:{0}}  {6:{0}}]:'.format(precision+3, 'Mrr','Mtt','Mpp','Mrt','Mrp','Mtp'))
+	self.log('     [{1:{7}.{8}f}  {2:{7}.{8}f}  {3:{7}.{8}f}  {4:{7}.{8}f}  {5:{7}.{8}f}  {6:{7}.{8}f} ] * {0:5.0e}'.format(c, *MT2, precision+3, precision))
 
 def print_fault_planes(self, precision='3.0', tool=''):
 	"""
