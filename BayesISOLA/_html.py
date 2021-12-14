@@ -19,7 +19,7 @@ def imgpath(img, img2, html):
 		return os.path.relpath(img2, d)
 	return None
 
-def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT='auto', plot_uncertainty='auto', plot_stations='auto', plot_seismo_cova='auto', plot_seismo_sharey='auto', mouse_figures=None, plot_spectra='auto', plot_noise='auto', plot_covariance_function='auto', plot_covariance_matrix='auto', plot_maps='auto', plot_slices='auto', plot_maps_sum='auto'):
+def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy automated solution', backlink=False, plot_MT='auto', plot_uncertainty='auto', plot_stations='auto', plot_seismo_cova='auto', plot_seismo_sharey='auto', mouse_figures=None, plot_spectra='auto', plot_noise='auto', plot_covariance_function='auto', plot_covariance_matrix='auto', plot_maps='auto', plot_slices='auto', plot_maps_sum='auto', MT_comp_precision=2):
 	"""
 	Generates an HTML page containing informations about the calculation and the result together with figures
 	
@@ -57,6 +57,9 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 	:type plot_slices: string, optional
 	:param plot_maps_sum: path to figures of solutions across the grid plotted by :func:`plot_maps_sum` (the common part of filename)
 	:type plot_maps_sum: string, optional
+	:param MT_comp_precision: number of decimal digits of moment tensor components (default ``2``)
+	:type MT_comp_precision: int, optional
+
 	"""
 	outfile = outfile.replace('$outdir', self.outdir)
 	out = open(outfile, 'w')
@@ -227,16 +230,16 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>scalar seismic moment M<sub>0</sub></th>	<td>{mom:5.2e} Nm</td>	<td></td></tr>
   <tr><th>moment magnitude M<sub>w</sub></th>	<td>{Mw:3.1f}</td>	<td>{ref_Mw:3.1f}</td></tr>
   <tr><th colspan="3" class="center">Moment tensor components</th></tr>
-  <tr><th>M<sub>rr</sub></th>			<td>{1:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
-  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
-  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
-  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
-  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
-  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:5.2f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>rr</sub></th>			<td>{1:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
+  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:{7}.{8}f} * {0:5.0e}</td>	<td>&nbsp;</td></tr>
   <tr><th colspan="3" class="center">Moment tensor decomposition</th></tr>
   <tr><th>DC component</th>	<td>{dc_perc:3.0f} %</td>	<td>{ref_dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD component</th>	<td>{clvd_perc:3.0f} %</td>	<td>{ref_clvd_perc:3.0f} %</td></tr>
-'''.format(c, *MT2, depth=C['z']/1e3, **decomp))
+'''.format(c, *MT2, MT_comp_precision+3, MT_comp_precision, depth=C['z']/1e3, **decomp))
 		if not self.MT.deviatoric:
 			out.write('''
   <tr><th>isotropic component</th>	<td>{iso_perc:3.0f} %</td>	<td>{ref_iso_perc:3.0f} %</td></tr>
@@ -258,16 +261,16 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th>scalar seismic moment M<sub>0</sub></th>	<td>{mom:5.2e} Nm</td></tr>
   <tr><th>moment magnitude M<sub>w</sub></th>	<td>{Mw:3.1f}</td></tr>
   <tr><th colspan="2" class="center">Moment tensor components</th></tr>
-  <tr><th>M<sub>rr</sub></th>			<td>{1:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:5.2f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>rr</sub></th>			<td>{1:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:{7}.{8}f} * {0:5.0e}</td></tr>
   <tr><th colspan="2" class="center">Moment tensor decomposition</th></tr>
   <tr><th>DC</th>	<td>{dc_perc:3.0f} %</td></tr>
   <tr><th>CLVD</th>	<td>{clvd_perc:3.0f} %</td></tr>
-'''.format(c, *MT2, depth=C['z']/1e3, **decomp))
+'''.format(c, *MT2, MT_comp_precision+3, MT_comp_precision, depth=C['z']/1e3, **decomp))
 		if not self.MT.deviatoric:
 			out.write('''
   <tr><th>ISO</th>	<td>{iso_perc:3.0f} %</td></tr>
@@ -286,16 +289,16 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
   <tr><th colspan="2" class="center">Centroid position</th></tr>
   <tr><th>depth</th>	<td>{depth:3.1f} km</td></tr>
   <tr><th colspan="2" class="center">Moment tensor components</th></tr>
-  <tr><th>M<sub>rr</sub></th>			<td>{1:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:5.2f} * {0:5.0e}</td></tr>
-  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:5.2f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>rr</sub></th>			<td>{1:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&theta;&theta;</sub></th>	<td>{2:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&#981;&#981;</sub></th>		<td>{3:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>r&theta;</sub></th>		<td>{4:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>r&#981;</sub></th>		<td>{5:{7}.{8}f} * {0:5.0e}</td></tr>
+  <tr><th>M<sub>&theta;&#981;</sub></th>	<td>{6:{7}.{8}f} * {0:5.0e}</td></tr>
   <tr><th colspan="2" class="center">Result quality</th></tr>
   <tr><th>condition number</th>	<td>{CN:2.0f}</td></tr>
   <tr><th>variance reduction</th>	<td>{VR:2.0f} %</td></tr>
-'''.format(c, *MT2, depth=C['z']/1e3, VR=C['VR']*100, CN=C['CN']))
+'''.format(c, *MT2, MT_comp_precision+3, MT_comp_precision, depth=C['z']/1e3, VR=C['VR']*100, CN=C['CN']))
 	if self.MT.max_VR:
 		out.write('  <tr><th>VR ({2:d} closest components)</th>	<td>{1:2.0f} %</td>{0:s}</tr>'.format(('', '<td></td>')[bool(reference)], self.MT.max_VR[0]*100, self.MT.max_VR[1]))
 	if reference and 'kagan' in reference:
@@ -633,13 +636,13 @@ def html_log(self, outfile='$outdir/index.html', reference=None, h1='ISOLA-ObsPy
 
 
 	out.write("""
-<script src="../html/js/lightbox-plus-jquery.min.js"></script>
+<script src="{0:s}"></script>
 <script>
-lightbox.option({
+lightbox.option({{
 'resizeDuration': 0
-})
+}})
 </script>
 </body>
 </html>
-""")
+""".format(imgpath('', "html/js/lightbox-plus-jquery.min.js", outfile)))
 	out.close()
