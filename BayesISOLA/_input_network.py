@@ -82,7 +82,7 @@ def read_network_info_DB(self, db, host, port=-1, user=None, password=None, min_
 	self.create_station_index()
 	self.models[''] = 0
 
-def read_network_coordinates(self, filename, network='', location='', channelcode='LH', min_distance=0., max_distance=999e3):
+def read_network_coordinates(self, filename, network='', location='', channelcode='LH', min_distance=0., max_distance=999e3, max_n_of_stations=21):
 	"""
 	Read informations about stations from file in ISOLA format.
 	Calculate their distances and azimuthes using WGS84 elipsoid.
@@ -100,6 +100,8 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 	:param min_distance: float or None
 	:param min_distance: maximal epicentral distance in meters
 	:param max_distance: float or None
+	:param min_distance: maximal number of stations used in inversion
+	:param max_distance: int or None
 	
 	If ``min_distance`` is ``None``, value is calculated as 2*self.rupture_length. If ``max_distance`` is ``None``, value is calculated as :math:`1000 \cdot 2^{2M}`.
 	"""
@@ -145,9 +147,9 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 		stn['weightN'] = stn['weightE'] = stn['weightZ'] = 1.
 		if dist > min_distance and dist < max_distance:
 			stats.append(stn)
-	stats = sorted(stats, key=lambda stn: stn['dist']) # seradit podle vzdalenosti
-	if len(stats) > 21:
-		stats = stats[0:21] # BECAUSE OF GREENS FUNCTIONS CALCULATION
+	stats = sorted(stats, key=lambda stn: stn['dist']) # sort by distance
+	if max_n_of_stations and len(stats) > max_n_of_stations:
+		stats = stats[0:max_n_of_stations]
 	self.stations = stats
 	self.create_station_index()
 	
