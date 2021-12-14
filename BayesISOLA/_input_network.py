@@ -82,7 +82,7 @@ def read_network_info_DB(self, db, host, port=-1, user=None, password=None, min_
 	self.create_station_index()
 	self.models[''] = 0
 
-def read_network_coordinates(self, filename, network='', location='', channelcode='LH', min_distance=0., max_distance=999e3, max_n_of_stations=21):
+def read_network_coordinates(self, filename, network='', location='', channelcode='LH', min_distance=None, max_distance=None, max_n_of_stations=None):
 	"""
 	Read informations about stations from file in ISOLA format.
 	Calculate their distances and azimuthes using WGS84 elipsoid.
