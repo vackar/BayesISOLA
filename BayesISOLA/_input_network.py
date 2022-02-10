@@ -106,6 +106,7 @@ def read_network_coordinates(self, filename, network='', location='', channelcod
 	If ``min_distance`` is ``None``, value is calculated as 2*self.rupture_length. If ``max_distance`` is ``None``, value is calculated as :math:`1000 \cdot 2^{2M}`.
 	"""
 	# 2DO: osetreni chyby, pokud neni event['lat'] a ['lon']
+	mag = self.event['mag']
 	if min_distance==None:
 		min_distance = 2*self.rupture_length
 	if max_distance==None:
