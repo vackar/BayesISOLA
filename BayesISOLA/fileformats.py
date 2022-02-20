@@ -32,7 +32,7 @@ def read_elemse_from_files(nr, path, stations, origin_time, invert_displacement=
 			f = {}
 			dir_file = os.path.join(path, str(j+1), stations[r]['network']+'.'+stations[r]['code']+'.'+stations[r]['location']+'.'+stations[r]['channelcode'])
 			st = Stream(traces=[read(dir_file+'Z.SAC')[0], read(dir_file+'N.SAC')[0], read(dir_file+'E.SAC')[0]])
-			st.trim(origin_time)
+			#st.trim(origin_time)
 			if invert_displacement:
 				st.detrend('linear')
 				st.integrate()

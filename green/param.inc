@@ -17,7 +17,7 @@ c**********************************************************************
       parameter (in1=10,in2=11,in3=12,out=13,out2=14)
 
       integer   nsp,nrp,ncp,nrsp,ikmin
-      parameter (nsp=1,nrp=31,ncp=200,nrsp=nrp*nsp,ikmin=100)
+      parameter (nsp=1,nrp=101,ncp=200,nrsp=nrp*nsp,ikmin=100)
       real*8    explim
       parameter (explim=-600.)
 

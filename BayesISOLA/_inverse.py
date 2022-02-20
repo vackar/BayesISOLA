@@ -67,7 +67,10 @@ def run_inversion(self):
 		gp['sum_c'] = 0
 		for idx in gp['shifts']:
 			GP = gp['shifts'][idx]
-			GP['c'] = np.sqrt(gp['det_Ca']) * np.exp(-0.5 * (GP['misfit']-min_misfit))
+			if gp['det_Ca'] == np.inf:
+				GP['c'] = 0
+			else:
+				GP['c'] = np.sqrt(gp['det_Ca']) * np.exp(-0.5 * (GP['misfit']-min_misfit))
 			gp['sum_c'] += GP['c']
 		gp['c'] = gp['shifts'][gp['shift_idx']]['c']
 		self.sum_c += gp['sum_c']

@@ -17,7 +17,7 @@ c
 
 	
       integer      nsp,nrp,ncp,ntp,nrtp,nrtp2,icc,ics,ifr
-      parameter    (nsp=1,ncp=200,nrp=31)
+      parameter    (nsp=1,ncp=200,nrp=101)
       
 !       parameter   (nsp=1,ncp=200,nrp=31,ntp=8192,nrtp=nrp*ntp) ! JV
 
