@@ -1,6 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Function for reading synthetic waveforms and response files in various fileformats.
+
+"""
+
 import re # RegExp
 from scipy.io import FortranFile # fortran unformated (binary) files
 import numpy as np

@@ -1,12 +1,17 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Calculate Green's function using ``Axitra`` code.
+
+"""
+
 import subprocess
 import hashlib
 
 def Axitra_wrapper(i, model, x, y, z, npts_exp, elemse_start_origin, logfile='output/log_green.txt'):
 	"""
-	Evaluate Green's function using code ``Axitra`` (programs ``gr_xyz`` and ``elemse``) in a given grid point.
+	Evaluate Green's function using ``Axitra`` code (programs ``gr_xyz`` and ``elemse``) in a given grid point.
 	
 	:param i: number (identifier) of grid point
 	:type i: integer
@@ -25,7 +30,7 @@ def Axitra_wrapper(i, model, x, y, z, npts_exp, elemse_start_origin, logfile='ou
 	:param logfile: path to text file, where are details about computation logged
 	:type logfile: string, optional
 	
-	Remark: because of paralelisation, this wrapper cannot be part of class :class:`ISOLA`.
+	Remark: because of paralelisation, this wrapper cannot be part of class :class:`BayesISOLA`.
 	"""
 	iter_max = 10
 	point_id = str(i).zfill(4)

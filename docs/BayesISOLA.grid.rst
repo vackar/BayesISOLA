@@ -1,7 +1,7 @@
 BayesISOLA.grid
 ===============
 
-.. automodule:: BayesISOLA.grid
+.. autoclass:: BayesISOLA.grid
     :members:
     :undoc-members:
     :show-inheritance:

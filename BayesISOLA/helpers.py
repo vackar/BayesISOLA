@@ -1,6 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Various data manipulation / arithmetic / waveform filtering functions.
+
+"""
+
 import numpy as np
 import fractions
 

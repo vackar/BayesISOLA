@@ -1,5 +1,10 @@
 #! /usr/bin/env python
 
+"""
+A class for detection of long-period disturbances by their modeling and fitting.
+
+"""
+
 import numpy as np
 from numpy import pi, sin, cos, arctan
 from obspy.core import stream, Trace, UTCDateTime

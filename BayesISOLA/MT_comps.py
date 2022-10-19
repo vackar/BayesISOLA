@@ -1,6 +1,11 @@
 #! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Moment tensor decomposition and conversion of its components.
+
+"""
+
 import subprocess
 import numpy as np
 
