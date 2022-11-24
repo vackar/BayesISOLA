@@ -43,7 +43,7 @@ def plot_MT(self, outfile='$outdir/centroid.png', facecolor='red'):
 	plt.clf()
 	plt.close()
 
-def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=None, best=True, fontsize=None):
+def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=None, best=True, fontsize=None, just_return_histogram_data=False):
 	"""
 	Generates random realizations based on the calculated solution and its uncertainty and plots these mechanisms and histograms of its parameters.
 	
@@ -57,6 +57,8 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 	:type best: boolean, optional
 	:param fontsize: fontsize for histogram annotations
 	:type fontsize: scalar, optional
+	:param just_return_histogram_data: do not plot anything, just return realizations of MT which sample posterior probability density space
+	:type just_return_histogram_data: boolean, optional
 	"""
 	
 	# Generate mechanisms
@@ -103,6 +105,9 @@ def plot_uncertainty(self, outfile='$outdir/uncertainty.png', n=200, reference=N
 		strike += [MT['s1'], MT['s2']]
 		dip    += [MT['d1'], MT['d2']]
 		rake   += [MT['r1'], MT['r2']]
+	
+	if just_return_histogram_data:
+		return({'dc':dc_perc, 'clvd':clvd_perc, 'iso':iso_perc, 'moment':moment, 'Mw':Mw, 'strike':strike, 'dip':dip, 'rake':rake })
 	
 	# Compute standard deviation
 	stdev = {'dc':np.std(dc_perc)/100, 'clvd':np.std(clvd_perc)/100, 'iso':np.std(iso_perc)/100, 'Mw':np.std(Mw)/0.2, 't':np.std(shift), 'x':np.std(NS), 'y':np.std(EW), 'z':np.std(depth)}

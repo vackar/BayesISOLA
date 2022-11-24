@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from scipy import signal
 
 from BayesISOLA.helpers import decimate
 
@@ -36,7 +37,7 @@ def tukeywin(window_length, alpha=0.5):
 def running_mean(x, N):
 	cumsum = np.cumsum(np.insert(x, 0, 0))
 	rm = (cumsum[N:] - cumsum[:-N])/N
-	Nzeros = floor(N/2)
+	Nzeros = int(np.floor(N/2))
 	rm = np.concatenate((np.zeros((Nzeros)), rm), axis=0)
 	rm = np.concatenate((rm, np.zeros((Nzeros))), axis=0)
 	return rm
@@ -189,9 +190,9 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 		if sta['useE']: idx.append(2)
 		d_st_tmp = []
 		for i in idx:
-			ntp = floor(len(self.data_shifts)/2)
+			ntp = int(np.floor(len(self.d.data_shifts)/2))
 			perOfMax = 0.1 # percentage of data variance from maximum amp (* 100%)
-			d_st_tmp.append((perOfMax * max(abs(self.data_shifts[ntp][r][i][0:n])))**2) # data variance
+			d_st_tmp.append((perOfMax * max(abs(self.d.data_shifts[ntp][r][i][0:n])))**2) # data variance
 		d_st_tmp_max = max(d_st_tmp)
 		d_variance.append(d_st_tmp_max)
 	d_var_max = max(d_variance)
@@ -219,15 +220,15 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 					
 					# Prepare parameters
 					nsampl = self.d.npts_slice
-					dt = 1/self.samprate
+					dt = 1/self.d.samprate
 					L1s = round(L1/dt)
 					
 					if (L1s < 2):
 						L1s = 2
 						#print('L1 changed to the minimum allowed value: 2 samples')
 					
-					ntp = floor(len(self.data_shifts)/2)
-					f = g = np.array(self.data_shifts[ntp][r][i][0:nsampl]) # [time_shift][station][comp][sampl]
+					ntp = int(np.floor(len(self.d.data_shifts)/2))
+					f = g = np.array(self.d.data_shifts[ntp][r][i][0:nsampl]) # [time_shift][station][comp][sampl]
 					
 					#plt.figure(0)
 					#plt.plot(f)
@@ -274,7 +275,7 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 						tap[k,k] = tw[k];
 					
 					# Fill the matrix
-					middle = floor(len(SACF)/2)
+					middle = int(np.floor(len(SACF)/2))
 					for k in range(nsampl):
 						for l in range(k, nsampl):
 							C[l+I, k+I] = C[k+I, l+I] = SACF[middle+k-l] * tap[k,l]
@@ -345,7 +346,7 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 			if sta['useN']: idx.append(1)
 			if sta['useE']: idx.append(2)
 			for i in idx:
-				d_variance.append((max(abs(self.data_shifts[shift][r][i][0:n]))/50)**2) # data variance set to 5% of the maximum
+				d_variance.append((max(abs(self.d.data_shifts[shift][r][i][0:n]))/50)**2) # data variance set to 5% of the maximum
 		d_var_max = max(d_variance)
 		C_shift = []
 		C_inv_shift = []
@@ -372,7 +373,7 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 						
 						# Prepare parameters
 						nsampl = self.d.npts_slice
-						dt = 1/self.samprate
+						dt = 1/self.d.samprate
 						L1s = round(L1/dt)
 						L12s = 1
 						
@@ -383,7 +384,7 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 						if (L1s % 2 == 0):
 							L1s = L1s - 1
 						
-						f = g = np.array(self.data_shifts[shift][r][i][0:nsampl]) # [time_shift][station][comp][sampl]
+						f = g = np.array(self.d.data_shifts[shift][r][i][0:nsampl]) # [time_shift][station][comp][sampl]
 						
 						# New number of samples
 						nsamplN = len(f) + 2*L1s
