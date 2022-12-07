@@ -174,6 +174,8 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 	
 	:type save_non_inverted: bool, optional
 	:param save_non_inverted: If ``True``, save also non-inverted matrix, which can be plotted later.
+	
+	Author: Miroslav Hallo, http://geo.mff.cuni.cz/~hallo/
 	"""
 	self.log('\nCreating SACF covariance matrix')
 	self.log('signal duration {0:5.1f} sec'.format(T))
@@ -329,6 +331,8 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 	
 	:type save_non_inverted: bool, optional
 	:param save_non_inverted: If ``True``, save also non-inverted matrix, which can be plotted later.
+	
+	Author: Miroslav Hallo, http://geo.mff.cuni.cz/~hallo/
 	"""
 	self.log('\nCreating ACF covariance matrix')
 	self.log('station         \t L1 (sec)')

@@ -58,6 +58,25 @@ def my_filter(data, fmin, fmax):
 		data.filter('highpass', freq=fmin, corners=2)
 		data.filter('highpass', freq=fmin, corners=2)
 
+def prefilter_data(st, f):
+	"""
+	Drop frequencies above Green's function computation high limit using :func:`numpy.fft.fft`.
+	
+	:param st: stream to be filtered
+	:type st: :class:`~obspy.core.stream`
+	:param f: the highest frequency which will be kept in st, the frequencies above will be erased
+	:type f: float
+	"""
+	for tr in st:
+		npts = tr.stats.npts
+		NPTS = next_power_of_2(npts)
+		TR = np.fft.fft(tr.data,NPTS)
+		df = tr.stats.sampling_rate / NPTS
+		flim = int(np.ceil(f/df))
+		TR[flim:NPTS-flim+1] = 0+0j
+		tr_filt = np.fft.ifft(TR)
+		tr.data = np.real(tr_filt[0:npts])
+
 def decimate(a, n=2):
 	"""
 	Decimates given sequence.

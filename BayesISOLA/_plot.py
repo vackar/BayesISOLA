@@ -43,10 +43,10 @@ def plot_stations(self, outfile='$outdir/stations.png', network=True, location=F
 			color = 'red'
 			if L1: label = 'all components used'; L1 = False
 		elif not sta['useN'] and not sta['useE'] and not sta['useZ']:
-			color = 'white'
+			color = 'gray'
 			if L3: label = 'not used'; L3 = False
 		else:
-			color = 'gray'
+			color = 'firebrick'
 			if L2: label = 'some components used'; L2 = False
 		if network and sta['network']: l = sta['network']+':'
 		else: l = ''

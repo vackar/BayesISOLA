@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-from obspy import read, Trace, Stream
+from obspy import read, Trace, Stream, read_inventory
 
 from BayesISOLA.fileformats import attach_ISOLA_paz, attach_xml_paz
 
@@ -215,7 +215,7 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 		acc = self.stations[i]['accelerograph']
 		# load data
 		files = []
-		for comp in ['Z', 'N', 'E']:
+		for comp in ['Z', 'N', 'E', '1', '2']:
 			names = [prefix + separator.join([sta,net,loc,ch+comp]) + suffix,
 				prefix + separator.join([net,sta,loc,ch+comp]) + suffix,
 				prefix + separator.join([sta,net,ch+comp]) + suffix,
@@ -244,7 +244,12 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 				xml_prefix + xml_separator.join([sta]) + xml_suffix]
 			for name in names:
 				if os.path.isfile(os.path.join(xml_dir, name)):
-					attach_xml_paz(self.data_raw[-1], os.path.join(xml_dir, name))
+					inv = read_inventory(os.path.join(xml_dir, name))
+					attach_xml_paz(self.data_raw[-1], inventory=inv)
+					break
+				elif os.path.isfile(xml_dir):
+					inv = read_inventory(xml_dir)
+					attach_xml_paz(self.data_raw[-1], inventory=inv)
 					break
 			else: # poles&zeros file not found
 				self.stations.pop(i)
@@ -253,6 +258,8 @@ def load_files(self, dir='.', prefix='', suffix='.sac', separator='.', pz_dir='.
 				self.log('Cannot find xml response file for station {0:s}:{1:s}.  Removing station from further processing.'.format(net, sta), printcopy=True)
 				self.log('\tExpected file location: ' + os.path.join(xml_dir, names[0]), printcopy=True)
 				continue
+			if self.data_raw[-1][1].stats.channel[2] in ('1', '2'):
+				self.data_raw[-1].rotate(method='->ZNE', inventory=inv)
 			i += 1 # station not removed
 		elif pz_dir:
 			# load poles and zeros - ISOLA format

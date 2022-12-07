@@ -3,7 +3,7 @@
 
 import numpy as np
  
-from BayesISOLA.helpers import my_filter, next_power_of_2
+from BayesISOLA.helpers import my_filter, prefilter_data, next_power_of_2
 
 def correct_data(self):
 	"""
@@ -11,7 +11,7 @@ def correct_data(self):
 	"""
 	for st in self.d.data_raw:
 		st.detrend(type='demean')
-		st.filter('highpass', freq=0.01) # DEBUG
+		# st.filter('highpass', freq=0.01) # DEBUG
 		for tr in st:
 			#tr2 = tr.copy() # DEBUG
 			if getattr(tr.stats, 'response', 0):
@@ -73,28 +73,10 @@ def trim_filter_data(self, noise_slice=True, noise_starttime=None, noise_length=
 			elif len(self.noise[-1]):
 				my_filter(self.noise[-1], fmin/2, fmax*2)
 				self.noise[-1].decimate(int(decimate*DECIMATE/2), no_filter=True) # noise has 2-times higher sampling than data
-		self.prefilter_data(st)
+		prefilter_data(st, self.freq / self.tl)
 		st.decimate(decimate, no_filter=True)
 		st.trim(starttime, endtime)
 	# TODO: kontrola, jestli neorezavame mimo puvodni zaznam
-
-def prefilter_data(self, st):
-	"""
-	Drop frequencies above Green's function computation high limit using :func:`numpy.fft.fft`.
-	
-	:param st: stream to be filtered
-	:type st: :class:`~obspy.core.stream`
-	"""
-	f = self.freq / self.tl
-	for tr in st:
-		npts = tr.stats.npts
-		NPTS = next_power_of_2(npts)
-		TR = np.fft.fft(tr.data,NPTS)
-		df = tr.stats.sampling_rate / NPTS
-		flim = int(np.ceil(f/df))
-		TR[flim:NPTS-flim+1] = 0+0j
-		tr_filt = np.fft.ifft(TR)
-		tr.data = np.real(tr_filt[0:npts])
 
 def decimate_shift(self):
 	"""
