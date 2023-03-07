@@ -338,8 +338,8 @@ def covariance_matrix_ACF(self, save_non_inverted=False):
 	self.log('station         \t L1 (sec)')
 	n = self.d.npts_slice
 	
-	for shift in range(len(self.d_shifts)):
-		d_shift = self.d_shifts[shift]
+	for shift in range(len(self.d.d_shifts)):
+		d_shift = self.d.d_shifts[shift]
 		
 		# Get components variance
 		d_variance = []
