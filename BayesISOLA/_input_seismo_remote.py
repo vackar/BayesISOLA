@@ -28,7 +28,7 @@ def load_streams_fdsnws(self, hosts, t_before=90, t_after=360, save_to=None):
 		hosts = [hosts]
 	s = 'Loading data from fdsnws server(s):\n'
 	for host in hosts:
-		s += '\thost: {0:s}\n'.format(host)
+		s += '\t' + host + '\n'
 	self.logtext['data'] = s
 	self.log(s)
 	while i < len(self.stations):
@@ -51,8 +51,9 @@ def load_streams_fdsnws(self, hosts, t_before=90, t_after=360, save_to=None):
 					st.attach_response(inv)
 					attach_xml_paz(st)
 			except:
-				print(sta['network'], sta['code'], host, 'exception')
+				# print(sta['network'], sta['code'], host, 'exception')
 				#print(url_data) # DEBUG
+				pass
 			else:
 				if st:
 					print(sta['network'], sta['code'], host, 'ok')

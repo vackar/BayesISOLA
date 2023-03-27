@@ -82,8 +82,3 @@ def find_best_grid_point(self):
 	Set ``self.centroid`` to a grid point with higher variance reduction -- the best solution of the inverse problem.
 	"""
 	self.centroid = max(self.grid, key=lambda g: g['VR']) # best grid point
-	x = self.centroid['x']; y = self.centroid['y']
-	az = np.degrees(np.arctan2(y, x))
-	dist = np.sqrt(x**2 + y**2)
-	g = Geod(ellps='WGS84')
-	self.centroid['lon'], self.centroid['lat'], baz = g.fwd(self.event['lon'], self.event['lat'], az, dist)

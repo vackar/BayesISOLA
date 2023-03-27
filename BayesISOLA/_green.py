@@ -7,6 +7,7 @@ import os.path
 import hashlib
 
 from BayesISOLA.axitra import Axitra_wrapper
+import BayesISOLA.syngine
 
 def set_Greens_parameters(self):
 	"""
@@ -146,5 +147,32 @@ def calculate_Green(self):
 				Axitra_wrapper(i, model, gp['x'], gp['y'], gp['z'], self.npts_exp, self.elemse_start_origin, logfile)
 
 def use_elemse_from_files(self, path):
+	"""
+	Add a path to elementary seismograms to grid points. It enables using external software for calculating elementary seismograms / Green's functions.
+	
+	:param path: path to a directory containing subdirectories with elementary seismograms for different grid points
+	:type path: string
+	"""
+	self.log('\nUsing elementary seismograms from: '+path)
+	self.d.stf_description = "Source time function is contained in GFs from elementary seismograms from external source."
 	for gp in self.grid.grid:
 		gp['path'] = os.path.join(path, gp['z_id'], gp['x_id']+gp['y_id'])
+
+def use_elemse_from_syngine(self, model="ak135f_5s", output_root_path="input/GFs"):
+	"""
+	Run a query to IRIS Syngine web service, save synthetic seismograms to files and add the path to the elementary seismograms to coresponding grid point.
+	
+	:param model: Earth model for synthetic seismograms. The list of available models: http://ds.iris.edu/ds/products/syngine/#earth
+	:type model: string, optional
+	:param output_root_path: path where the elementary seismograms are saved to
+	:type output_root_path: string, optional
+	"""
+	self.log('\nDownloading elementary seismograms from Syngine.\n\tEarth model: '+model)
+	self.d.stf_description = "Source time function is contained in GFs from elementary seismograms from Syngine. By default Instaseis returns the response to a very narrow Gaussian source time function with a full-width at half-max of approximately two-thirds the shortest period resolved, which is as close to a delta function as possible with AxiSEM."
+	query = BayesISOLA.syngine.generate_query()
+	for stn in self.d.stations:
+		query.bulk.append({"networkcode": stn['network'], "stationcode": stn['code'], "locationcode": stn['location'], "latitude": stn['lat'], "longitude": stn['lon']})
+	for gp in self.grid.grid:
+		path = os.path.join(output_root_path, gp['z_id'], gp['x_id']+gp['y_id'])
+		query.do_query_simple(model, gp['lat'], gp['lon'], gp['z'], self.d.event['t'], self.d.event['t']+self.t_min, self.d.event['t']+self.t_max, path)
+		gp['path'] = path

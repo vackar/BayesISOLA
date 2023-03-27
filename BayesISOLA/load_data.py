@@ -64,6 +64,7 @@ class load_data:
 		self.data_deltas = [] # list of ``stats.delta`` values of traces in ``self.data`` or ``self.data_raw``
 		self.logtext = {}
 		self.models = {}
+		self.stf_description = ""
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.__del__()

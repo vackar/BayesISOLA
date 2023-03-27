@@ -5,19 +5,26 @@ import numpy as np
  
 from BayesISOLA.helpers import my_filter, prefilter_data, next_power_of_2
 
-def correct_data(self):
+def correct_data(self, water_level=20):
 	"""
 	Corrects ``self.d.data_raw`` for the effect of instrument. Poles and zeros must be contained in trace stats.
+	
+	:param water_level: Water level in dB for deconvolution of instrument response.
+	:type water_level: float, optional
 	"""
+	self.log('Removing instrument response.\n\tWater level: '+str(water_level))
 	for st in self.d.data_raw:
 		st.detrend(type='demean')
 		# st.filter('highpass', freq=0.01) # DEBUG
 		for tr in st:
 			#tr2 = tr.copy() # DEBUG
 			if getattr(tr.stats, 'response', 0):
-				tr.remove_response(output="VEL")
+				tr.remove_response(output="VEL", water_level=water_level)
+			elif getattr(tr.stats, 'paz', 0):
+				tr.simulate(paz_remove=tr.stats.paz, water_level=water_level)
 			else:
-				tr.simulate(paz_remove=tr.stats.paz)
+				print(tr.stats)
+				raise('No response in tr.stats for the trace above.')
 	# 2DO: add prefiltering etc., this is not the best way for the correction
 	# 	see http://docs.obspy.org/packages/autogen/obspy.core.trace.Trace.remove_response.html
 	self.d.data_are_corrected = True
