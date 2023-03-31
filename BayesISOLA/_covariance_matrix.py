@@ -113,9 +113,9 @@ def covariance_matrix_noise(self, crosscovariance=False, save_non_inverted=False
 								#C[k+I, l+J] = corr[middle+abs(k-l)]
 								#C[l+J, k+I] = corr[middle-abs(k-l)]
 		#C = np.diag(np.ones(size)*corr[middle]*10) # DEBUG
-		for i in idx:  # add to diagonal 1% of its average
+		for i in idx:  # add to diagonal 2% of its average
 			I = idx.index(i)*n
-			C[I:I+n, I:I+n] += np.diag(np.zeros(n)+np.average(C[I:I+n, I:I+n].diagonal())*0.01)
+			C[I:I+n, I:I+n] += np.diag(np.zeros(n)+np.average(C[I:I+n, I:I+n].diagonal())*0.02)
 		if save_non_inverted:
 			self.Cd.append(C)
 		if crosscovariance and len(C):
@@ -195,8 +195,11 @@ def covariance_matrix_SACF(self, T = 15.0, taper = 0.0, save_non_inverted=False,
 			ntp = int(np.floor(len(self.d.data_shifts)/2))
 			perOfMax = 0.1 # percentage of data variance from maximum amp (* 100%)
 			d_st_tmp.append((perOfMax * max(abs(self.d.data_shifts[ntp][r][i][0:n])))**2) # data variance
-		d_st_tmp_max = max(d_st_tmp)
-		d_variance.append(d_st_tmp_max)
+		if idx:
+			d_st_tmp_max = max(d_st_tmp)
+			d_variance.append(d_st_tmp_max)
+		else:
+			d_variance.append(0)
 	d_var_max = max(d_variance)
 	
 	# Build the matrix
